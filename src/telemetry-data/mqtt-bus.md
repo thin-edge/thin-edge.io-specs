@@ -1,3 +1,5 @@
+<!-- toc -->
+
 # The Thin Edge MQTT bus
 
 ## Sending measurements to thin-edge.io

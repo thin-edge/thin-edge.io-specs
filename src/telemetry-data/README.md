@@ -1,3 +1,5 @@
+<!-- toc -->
+
 # Sourcing, Processing and Publishing Telemetry Data
 
 Thin-edge.io primary use-case is to:

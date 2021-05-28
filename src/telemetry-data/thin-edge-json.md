@@ -1,3 +1,5 @@
+<!-- toc -->
+
 # Thin-Edge-Json
 
 Thin Edge JSON is a lightweight format used in `thin-edge.io` to represent measurements data.
