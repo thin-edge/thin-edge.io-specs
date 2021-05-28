@@ -9,3 +9,10 @@ src = "src"
 command = "mdbook-toc"
 renderer = ["html"]
 marker = "<!-- toc -->"
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+renderer = ["html"]
+
+[output.html]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
