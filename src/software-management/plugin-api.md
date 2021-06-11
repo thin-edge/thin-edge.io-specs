@@ -14,7 +14,7 @@ $ debian-plugin type
 debian
 ```
 
-This name is used by the plugin manager to determine which plugin, amongst all the available ones,
+This name is used by the software management agent to determine which plugin, amongst all the available ones,
 is appropriate for an operation.
 
 ## The `install` command
@@ -36,7 +36,7 @@ $ debian-plugin list
 ...
 ```
 
-The list is returned using the jsonlines format.
+The list is returned using the [jsonlines](https://jsonlines.org/) format.
 
 ## The `prepare` command
 

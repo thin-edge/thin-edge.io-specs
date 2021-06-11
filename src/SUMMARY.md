@@ -7,4 +7,5 @@
     
 ## Software management
 - [Software management](software-management/README.md)
+    - [Concepts](software-management/concepts.md)
     - [Package Manager Plugin API](software-management/plugin-api.md)
