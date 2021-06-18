@@ -29,10 +29,11 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
 3. Register as actual plugin any plugin which name is the module type.
 3. Register as plugin alias any plugin which module type is a different plugin.
 
-On request of an operation, the sm-agent determines the appropriate operation as follow:
-* If the operation is global, the operation is forwarded to all the actual plugins (that is those they are not aliases).
-* If the operation is specific to a module with an associated type, the operation is directed to the plugin for that type.
-* If the operation is specific to a module with no associated type, the operation is directed to the plugin named default.
+On request of an action, the sm-agent determines the appropriate plugin for an action as follows:
+* If the action has to be dispatched to all the plugins (as a `list` action),
+  the action is forwarded only to the actual plugins (that is those they are not aliases).
+* If the action is specific to a module with an associated type, the action is directed to the plugin for that type.
+* If the action is specific to a module with no associated type, the action is directed to the plugin named default.
 * An error is returned by the sm-agent if no plugin can be associated to the operation.
 
 ## Plugin API
@@ -41,7 +42,29 @@ On request of an operation, the sm-agent determines the appropriate operation as
   But, a plugin can implement any other commands.
   This also applies to the options for these commands.
   A plugin can support more options than used by thin-edge.
-  This gives a way to derive a specialized plugin from a more generic one.  
+  This gives a way to derive a specialized plugin from a more generic one.
+* A plugin might have a configuration file.
+  * It can be a list of remote repositories, or a list of software modules to be excluded.
+  * These configuration files are managed from the cloud via the sm-agent (TODO: how).
+
+### Input, Output and Errors
+
+* The plugins are called by the sm-agent using a child process for each action.
+* For the current list of commands there is no input beyond the command arguments,
+  and a plugin can close its `stdin`.
+* The `stdout` and `stderr` of the process running a plugin command are captured by the sm-agent.
+  * These streams might be forwarded to cloud (depending of the cloud mapper).
+  * These streams don't have to be the streams returned by the underlying package manager.
+    It can be a one sentence summary of the error, redirecting the administrator to the package manager logs.
+* A plugin must return the appropriate exit status after each command.
+    * In no cases, the error status of the underlying package manager should be reported.
+* The exit status are interpreted by sm-agent as follows:
+    * __`0`__: success.
+    * __`1`__: usage. The command arguments cannot be interpreted, and the command has not been launched.
+    * __`2`__: failure. The command failed and there is no point to retry.
+    * __`3`__: retry. The command failed but might be successful later (for instance, when the network will be back).
+* If the command fails to return within 5 minutes, the sm-agent reports a timeout error:
+    * __`4`__: timeout.
 
 ### The `type` command
 
@@ -93,6 +116,8 @@ TBD.
 1. An opportunity to remove any unnecessary module after a sequence of operations.
 2. Commit or rollback the sequence of operations. 
 
+It can be a no-op.
+
 ### The `install` command
 
 TBD.
@@ -100,6 +125,11 @@ TBD.
 ```
 $ plugin install NAME [--version VERSION] [--file FILE]
 ```
+
+* error if the requested version can not be installed
+* --file vs --url
+* mismatch between VERSION and FILE -> 
+* exact version or version constraints?
 
 ### The `remove` command
 
