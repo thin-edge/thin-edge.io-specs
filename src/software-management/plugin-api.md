@@ -86,6 +86,10 @@ $ /etc/tedge/sm-plugins/epl type
 apama
 ```
 
+Contract:
+* This command take no arguments.
+* If an error status is returned, the executable is removed from the list of plugins.
+
 ### The `list` command
 
 When called with the `list` command, a plugin returns the list of modules that have been installed with this plugin.
@@ -98,35 +102,72 @@ $ debian-plugin list
 ...
 ```
 
-The list is returned using the [jsonlines](https://jsonlines.org/) format.
-
-* __`type`__: the software module type name of the module. This name must match the name returned by the `type` command.
-* __`name`__: the name of the module. This name is the name that has been used to install it and that need to be used to remove it.
-* __`version`__: the version currently installed. This is a string that can only been interpreted in the context of the plugin.
+Contract:
+* This command take no arguments.
+* If an error status is returned, the executable is removed from the list of plugins.
+* The list is returned using the [jsonlines](https://jsonlines.org/) format.
+    * __`type`__: the software module type name of the module. This name must match the name returned by the `type` command.
+    * __`name`__: the name of the module. This name is the name that has been used to install it and that need to be used to remove it.
+    * __`version`__: the version currently installed. This is a string that can only been interpreted in the context of the plugin.
 
 ### The `prepare` command
 
-TBD. The idea is twofold.
-1. Give an opportunity to the plugin to update its dependencies before a sequence of operations.
-2. Start a transaction, in case the plugin is able to manage rollbacks. 
+The `prepare` command is invoked by the sm-agent before a sequence of install and remove commands
+
+```
+$ /etc/tedge/sm-plugins/debian prepare
+$ /etc/tedge/sm-plugins/debian install x
+$ /etc/tedge/sm-plugins/debian install y
+$ /etc/tedge/sm-plugins/debian remove z
+$ /etc/tedge/sm-plugins/debian finalize
+```
+
+For many plugins this command will do nothing. However, It gives an opportunity to the plugin to:
+* Update the dependencies before a sequence of operations.
+   Notably, a debian plugin can update the `apt` cache issuing an `apt-get update`.
+* Start a transaction, in case the plugin is able to manage rollbacks.
+
+Contract:
+* This command take no arguments.
+* No output is expected.
+* If the `prepare` command fails, then the planned sequences of actions (.i.e the whole sm operation) is cancelled. 
 
 ### The `finalize` command
 
-TBD.
-1. An opportunity to remove any unnecessary module after a sequence of operations.
-2. Commit or rollback the sequence of operations. 
+The `finalize` command closes a sequence of install and remove commands started by a `prepare` command.
 
-It can be a no-op.
+This can be a no-op, but this is also an pportunity to:
+* Remove any unnecessary module after a sequence of operations.
+* Commit or rollback the sequence of operations. 
+
+Contract:
+* This command take no arguments.
+* No output is expected.
+* If the `finalize` command fails, then the planned sequences of actions (.i.e the whole sm operation) is reported as failed,
+  even if all the atomic operations has been successfully completed.
 
 ### The `install` command
 
-TBD.
+The `install` command installs a single package module, possibly with some expected version.
 
 ```
 $ plugin install NAME [--version VERSION] [--file FILE]
 ```
 
-* error if the requested version can not be installed
+Contract:
+* The command requires a single mandatory argument: the module name.
+  * This module name is meaningful only to the plugin
+    and is transmitted unchanged from the cloud to the plugin.
+* An optional version string can be provided.
+  * This version string is meaningful only to the plugin
+    and is transmitted unchanged from the cloud to the plugin.
+  * The version string can include constraints (as at least that version),
+    from the sm-agent this is no more than a string.
+* An optional file path can be provided.
+  * When the device administrator provides an url,
+    the sm-agent downloads the module on the device
+    
+error if the requested version cannot be installed
 * --file vs --url
 * mismatch between VERSION and FILE -> 
 * exact version or version constraints?
@@ -136,3 +177,5 @@ $ plugin install NAME [--version VERSION] [--file FILE]
 ```
 $ plugin remove NAME [--version VERSION]
 ```
+
+idem
