@@ -9,7 +9,7 @@ For easier referencing the use-cases are numbered as "UC1, UC2, UC3, ...".
 
 ## Use-Case Diagram
 
-TODO: add diagram
+![](images/use-cases-sw-management.svg)
 
 ### Details per
 
