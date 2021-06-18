@@ -143,12 +143,14 @@ This can be a no-op, but this is also an pportunity to:
 Contract:
 * This command take no arguments.
 * No output is expected.
+* This command might check (but doesn't have to) that the list of install and remove command has been consistent.
+  * For instance, a plugin might raise an error after the sequence `prepare;install a; remove a-dependency; finalize`.
 * If the `finalize` command fails, then the planned sequences of actions (.i.e the whole sm operation) is reported as failed,
   even if all the atomic operations has been successfully completed.
 
 ### The `install` command
 
-The `install` command installs a single package module, possibly with some expected version.
+The `install` command installs a package module, possibly of some expected version.
 
 ```
 $ plugin install NAME [--version VERSION] [--file FILE]
@@ -163,19 +165,56 @@ Contract:
     and is transmitted unchanged from the cloud to the plugin.
   * The version string can include constraints (as at least that version),
     from the sm-agent this is no more than a string.
+  * If no version is provided the plugin is free to install the more appropriate version.
 * An optional file path can be provided.
   * When the device administrator provides an url,
-    the sm-agent downloads the module on the device
-    
-error if the requested version cannot be installed
-* --file vs --url
-* mismatch between VERSION and FILE -> 
-* exact version or version constraints?
+    the sm-agent downloads the module on the device,
+    then invoke the install command with a path to that file.
+  * The plugin must extract the module to be install from the file.
+  * If no file is provided, the plugin has to derive the appropriate location from its repository
+    and to download the module accordingly.
+* The command installs the requested module and any dependencies that might be required.
+  * It is up to the plugin to define if this command triggers an installation or an upgrade.
+    It depends on the presence of a previous version on the device and
+    of the ability of the package manager to deal with concurrent versions for a module. 
+  * A plugin might not be able to install dependencies.
+    In that case, the device administrator will have to request explicitly the dependencies to be installed first.
+  * On success, and once the `finalize` command has been successfully called, the module version should be reported by the `list` command. 
+    This is should and not a must, for two reasons.
+    First, the list report the module versions while constraints might be provided to the `--version` option.
+    Second, a plugin is not required to detect inconsistent actions as `prepare;install a; remove a-dependency; finalize`.
+  * This is not an error to run this command twice or when the module is already installed.  
+* An error must be reported if:
+  * The module name is unknown.
+  * There is no version for the module that matches the constraint provided by the `--version` option.
+  * The file content provided by `--file` option:
+     * is not in the expected format,
+     * doesn't correspond to the package name,
+     * has a version that doesn't match the constraint provided by the `--version` option (if any).
+  * The module cannot be downloaded.
+  * The module cannot be installed.
 
 ### The `remove` command
+
+The `remove` command uninstalls a package module.
 
 ```
 $ plugin remove NAME [--version VERSION]
 ```
 
-idem
+Contract:
+* The command requires a single mandatory argument: the module name.
+  * This module name is meaningful only to the plugin
+    and is transmitted unchanged from the cloud to the plugin.
+* An optional version string can be provided.
+  * This version string is meaningful only to the plugin
+    and is transmitted unchanged from the cloud to the plugin.
+* The command uninstall the requested module and possibly any dependencies that are no more required.
+  * If a version is provided, only the module of that version is removed.
+    This is in-practice useful only for a package manager that is able to install concurrent versions of a module. 
+  * On success, and once the `finalize` command has been successfully called, the module should no more be reported by the `list` command.
+    This is should and not a must as for the `install` command.
+  * This is not an error to run this command twice or when the module is not installed.  
+* An error must be reported if:
+  * The module name is unknown.
+  * The module cannot be uninstalled.
