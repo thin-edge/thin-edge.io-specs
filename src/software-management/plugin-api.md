@@ -51,7 +51,6 @@ On request of an action, the sm-agent determines the appropriate plugin for an a
 * For the current list of commands there is no input beyond the command arguments,
   and a plugin can close its `stdin`.
 * The `stdout` and `stderr` of the process running a plugin command are captured by the sm-agent.
-  * These streams might be forwarded to cloud (depending of the cloud mapper).
   * These streams don't have to be the streams returned by the underlying package manager.
     It can be a one sentence summary of the error, redirecting the administrator to the package manager logs.
 * A plugin must return the appropriate exit status after each command.
@@ -95,8 +94,8 @@ When called with the `list` command, a plugin returns the list of software modul
 ```shell
 $ debian-plugin list
 ...
-{"type":"debian","name":"collectd-core","version":"5.8.1-1.3"}
-{"type":"debian","name":"mosquitto","version":"1.5.7-1+deb10u1"}
+{"name":"collectd-core","version":"5.8.1-1.3"}
+{"name":"mosquitto","version":"1.5.7-1+deb10u1"}
 ...
 ```
 
@@ -104,7 +103,6 @@ Contract:
 * This command take no arguments.
 * If an error status is returned, the executable is removed from the list of plugins.
 * The list is returned using the [jsonlines](https://jsonlines.org/) format.
-    * __`type`__: the module type name of the software module. This name must match the name returned by the `type` command.
     * __`name`__: the name of the module. This name is the name that has been used to install it and that need to be used to remove it.
     * __`version`__: the version currently installed. This is a string that can only been interpreted in the context of the plugin.
 
@@ -134,9 +132,10 @@ Contract:
 
 The `finalize` command closes a sequence of install and remove commands started by a `prepare` command.
 
-This can be a no-op, but this is also an pportunity to:
+This can be a no-op, but this is also an opportunity to:
 * Remove any unnecessary software module after a sequence of actions.
-* Commit or rollback the sequence of actions. 
+* Commit or rollback the sequence of actions.
+* Restart any processes using the modules, e.g. restart the analytics engines if the modules have changed
 
 Contract:
 * This command take no arguments.
@@ -156,19 +155,17 @@ $ plugin install NAME [--version VERSION] [--file FILE]
 
 Contract:
 * The command requires a single mandatory argument: the software module name.
-  * This module name is meaningful only to the plugin
-    and is transmitted unchanged from the cloud to the plugin.
+  * This module name is meaningful only to the plugin.
 * An optional version string can be provided.
   * This version string is meaningful only to the plugin
     and is transmitted unchanged from the cloud to the plugin.
   * The version string can include constraints (as at least that version),
-    from the sm-agent this is no more than a string.
+    from the sm-agent viewpoint this is no more than a string.
   * If no version is provided the plugin is free to install the more appropriate version.
 * An optional file path can be provided.
   * When the device administrator provides an url,
     the sm-agent downloads the software module on the device,
     then invoke the install command with a path to that file.
-  * The plugin must extract the software module to be install from the file.
   * If no file is provided, the plugin has to derive the appropriate location from its repository
     and to download the software module accordingly.
 * The command installs the requested software module and any dependencies that might be required.
@@ -194,7 +191,7 @@ Contract:
 
 ### The `remove` command
 
-The `remove` command uninstalls a software module.
+The `remove` command uninstalls a software module, and possibly its dependencies if no other modules are dependent on those.
 
 ```
 $ plugin remove NAME [--version VERSION]
