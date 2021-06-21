@@ -5,11 +5,11 @@ all the software management operations: installation of packages, uninstallation
 
 * A package manager plugin acts as a facade for a specific package manager.
 * A plugin is an executable that follows the [plugin API](./#plugin-api).
-* On a device, several plugins can be installed to deal with different kinds of package.
-* Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a module.
-* All the operations on a module are directed to the plugin which name is the module type name.
+* On a device, several plugins can be installed to deal with different kinds of software modules.
+* Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.
+* All the actions on a software module are directed to the plugin which name is the module type name.
 * Among all the plugin, one can be distinguished as the default plugin.
-* The default plugin is invoked when no module type can be determined by the system.
+* The default plugin is invoked when no software module type can be determined by the system.
 * Several plugins can co-exist for a given package manager as long as they are given different name.
   Each can implement a specific software management policy.
 
@@ -32,9 +32,9 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
 On request of an action, the sm-agent determines the appropriate plugin for an action as follows:
 * If the action has to be dispatched to all the plugins (as a `list` action),
   the action is forwarded only to the actual plugins (that is those they are not aliases).
-* If the action is specific to a module with an associated type, the action is directed to the plugin for that type.
-* If the action is specific to a module with no associated type, the action is directed to the plugin named default.
-* An error is returned by the sm-agent if no plugin can be associated to the operation.
+* If the action is specific to a software module with an associated type, the action is directed to the plugin for that type.
+* If the action is specific to a software module with no associated type, the action is directed to the plugin named default.
+* If no plugin can be associated to the action, the operation execution continues, but the operation status is set to "FAILED"".
 
 ## Plugin API
 
@@ -76,7 +76,7 @@ debian
 ```
 
 This name is used by the software management agent to determine which plugin, amongst all the available ones,
-is appropriate for an operation.
+is appropriate for an action.
 
 Note that a plugin alias returns the type of the referenced plugin.
 ```
@@ -92,7 +92,7 @@ Contract:
 
 ### The `list` command
 
-When called with the `list` command, a plugin returns the list of modules that have been installed with this plugin.
+When called with the `list` command, a plugin returns the list of software modules that have been installed with this plugin.
 
 ```shell
 $ debian-plugin list
@@ -106,7 +106,7 @@ Contract:
 * This command take no arguments.
 * If an error status is returned, the executable is removed from the list of plugins.
 * The list is returned using the [jsonlines](https://jsonlines.org/) format.
-    * __`type`__: the software module type name of the module. This name must match the name returned by the `type` command.
+    * __`type`__: the module type name of the software module. This name must match the name returned by the `type` command.
     * __`name`__: the name of the module. This name is the name that has been used to install it and that need to be used to remove it.
     * __`version`__: the version currently installed. This is a string that can only been interpreted in the context of the plugin.
 
@@ -123,7 +123,7 @@ $ /etc/tedge/sm-plugins/debian finalize
 ```
 
 For many plugins this command will do nothing. However, It gives an opportunity to the plugin to:
-* Update the dependencies before a sequence of operations.
+* Update the dependencies before an operation, *i.e. a sequence of actions.
    Notably, a debian plugin can update the `apt` cache issuing an `apt-get update`.
 * Start a transaction, in case the plugin is able to manage rollbacks.
 
@@ -137,8 +137,8 @@ Contract:
 The `finalize` command closes a sequence of install and remove commands started by a `prepare` command.
 
 This can be a no-op, but this is also an pportunity to:
-* Remove any unnecessary module after a sequence of operations.
-* Commit or rollback the sequence of operations. 
+* Remove any unnecessary software module after a sequence of actions.
+* Commit or rollback the sequence of actions. 
 
 Contract:
 * This command take no arguments.
@@ -146,18 +146,18 @@ Contract:
 * This command might check (but doesn't have to) that the list of install and remove command has been consistent.
   * For instance, a plugin might raise an error after the sequence `prepare;install a; remove a-dependency; finalize`.
 * If the `finalize` command fails, then the planned sequences of actions (.i.e the whole sm operation) is reported as failed,
-  even if all the atomic operations has been successfully completed.
+  even if all the atomic actions has been successfully completed.
 
 ### The `install` command
 
-The `install` command installs a package module, possibly of some expected version.
+The `install` command installs a software module, possibly of some expected version.
 
 ```
 $ plugin install NAME [--version VERSION] [--file FILE]
 ```
 
 Contract:
-* The command requires a single mandatory argument: the module name.
+* The command requires a single mandatory argument: the software module name.
   * This module name is meaningful only to the plugin
     and is transmitted unchanged from the cloud to the plugin.
 * An optional version string can be provided.
@@ -168,12 +168,12 @@ Contract:
   * If no version is provided the plugin is free to install the more appropriate version.
 * An optional file path can be provided.
   * When the device administrator provides an url,
-    the sm-agent downloads the module on the device,
+    the sm-agent downloads the software module on the device,
     then invoke the install command with a path to that file.
-  * The plugin must extract the module to be install from the file.
+  * The plugin must extract the software module to be install from the file.
   * If no file is provided, the plugin has to derive the appropriate location from its repository
-    and to download the module accordingly.
-* The command installs the requested module and any dependencies that might be required.
+    and to download the software module accordingly.
+* The command installs the requested software module and any dependencies that might be required.
   * It is up to the plugin to define if this command triggers an installation or an upgrade.
     It depends on the presence of a previous version on the device and
     of the ability of the package manager to deal with concurrent versions for a module. 
@@ -189,14 +189,14 @@ Contract:
   * There is no version for the module that matches the constraint provided by the `--version` option.
   * The file content provided by `--file` option:
      * is not in the expected format,
-     * doesn't correspond to the package name,
+     * doesn't correspond to the software module name,
      * has a version that doesn't match the constraint provided by the `--version` option (if any).
   * The module cannot be downloaded.
   * The module cannot be installed.
 
 ### The `remove` command
 
-The `remove` command uninstalls a package module.
+The `remove` command uninstalls a software module.
 
 ```
 $ plugin remove NAME [--version VERSION]
