@@ -38,14 +38,12 @@ On request of an action, the sm-agent determines the appropriate plugin for an a
 
 ## Plugin API
 
-* A plugin must at least implement all the commands used by the sm-agent of thin-edge.
-  But, a plugin can implement any other commands.
-  This also applies to the options for these commands.
-  A plugin can support more options than used by thin-edge.
-  This gives a way to derive a specialized plugin from a more generic one.
+* A plugin must implement all the commands used by the sm-agent of thin-edge,
+  and support all the options for these commands.
+* A plugin should not support extra command or option.
 * A plugin might have a configuration file.
   * It can be a list of remote repositories, or a list of software modules to be excluded.
-  * These configuration files are managed from the cloud via the sm-agent (TODO: how).
+  * These configuration files can be managed from the cloud via the sm-agent (TODO: how).
 
 ### Input, Output and Errors
 
