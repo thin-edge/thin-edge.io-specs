@@ -174,10 +174,10 @@ Contract:
     of the ability of the package manager to deal with concurrent versions for a module. 
   * A plugin might not be able to install dependencies.
     In that case, the device administrator will have to request explicitly the dependencies to be installed first.
-  * On success, and once the `finalize` command has been successfully called, the module version should be reported by the `list` command. 
-    This is should and not a must, for two reasons.
-    First, the list report the module versions while constraints might be provided to the `--version` option.
-    Second, a plugin is not required to detect inconsistent actions as `prepare;install a; remove a-dependency; finalize`.
+  * After a successful sequence `prepare; install foo; finalize` the module `foo` must be reported by the `list` command. 
+  * After a successful sequence `prepare; install foo --version v; finalize` the module `foo` must be reported by the `list` command with the version `v`.
+    If the plugin manage concurrent versions, the module `foo` might also be reported with versions already installed before the operation.
+  * A plugin is not required to detect inconsistent actions as `prepare; install a; remove a-dependency; finalize`.
   * This is not an error to run this command twice or when the module is already installed.  
 * An error must be reported if:
   * The module name is unknown.
@@ -206,9 +206,11 @@ Contract:
     and is transmitted unchanged from the cloud to the plugin.
 * The command uninstall the requested module and possibly any dependencies that are no more required.
   * If a version is provided, only the module of that version is removed.
-    This is in-practice useful only for a package manager that is able to install concurrent versions of a module. 
-  * On success, and once the `finalize` command has been successfully called, the module should no more be reported by the `list` command.
-    This is should and not a must as for the `install` command.
+    This is in-practice useful only for a package manager that is able to install concurrent versions of a module.
+  * After a successful sequence `prepare; remove foo; finalize` the module `foo` must no more be reported by the `list` command. 
+  * After a successful sequence `prepare; remove foo --version v; finalize` the module `foo` no more be reported by the `list` command with the version `v`.
+    If the plugin manage concurrent versions, the module `foo` might still be reported with versions already installed before the operation.
+  * A plugin is not required to detect inconsistent actions as `prepare; remove a; install a-reverse-dependency; finalize`.
   * This is not an error to run this command twice or when the module is not installed.  
 * An error must be reported if:
   * The module name is unknown.
