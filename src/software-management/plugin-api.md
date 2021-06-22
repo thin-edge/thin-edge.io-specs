@@ -16,25 +16,12 @@ all the software management operations: installation of packages, uninstallation
 ## Plugin repository
 
 * To be used by thin-edge, a plugin has to stored in the directory `/etc/tedge/sm-plugins`.
-* The same plugin can be given different names, using virtual or hard links.
+* The same plugin can be given different names, using virtual links.
 * One of the plugin can be given the name `default`. This plugin is then used as the default plugin.
-* To make the difference between a plugin alias and an actual plugin,
-  thin-edge invokes the [`type`](./#the_type_command) function of the plugin.
-  If alias plugin returns the type name of the actual plugin,
-  while an actual plugin returns its own name.
 
 On start-up and sighup, the sm-agent registers the plugins as follow:
 1. Iterate over the executable file of the directory `/etc/tedge/sm-plugins`.
-2. Check the executable is indeed a plugin, calling the [`type`](./#the_type_command) command.
-3. Register as actual plugin any plugin which name is the module type.
-3. Register as plugin alias any plugin which module type is a different plugin.
-
-On request of an action, the sm-agent determines the appropriate plugin for an action as follows:
-* If the action has to be dispatched to all the plugins (as a `list` action),
-  the action is forwarded only to the actual plugins (that is those they are not aliases).
-* If the action is specific to a software module with an associated type, the action is directed to the plugin for that type.
-* If the action is specific to a software module with no associated type, the action is directed to the plugin named default.
-* If no plugin can be associated to the action, the operation execution continues, but the operation status is set to "FAILED"".
+2. Check the executable is indeed a plugin, calling the [`list`](./#the_list_command) command.
 
 ## Plugin API
 
@@ -62,30 +49,6 @@ On request of an action, the sm-agent determines the appropriate plugin for an a
     * __`3`__: retry. The command failed but might be successful later (for instance, when the network will be back).
 * If the command fails to return within 5 minutes, the sm-agent reports a timeout error:
     * __`4`__: timeout.
-
-### The `type` command
-
-When called with the `type` command, a plugin returns the software module type it can be used for.
-
-```shell
-$ /etc/tedge/sm-plugins/debian type
-debian
-```
-
-This name is used by the software management agent to determine which plugin, amongst all the available ones,
-is appropriate for an action.
-
-Note that a plugin alias returns the type of the referenced plugin.
-```
-$ /etc/tedge/sm-plugins/deb type
-debian
-$ /etc/tedge/sm-plugins/epl type
-apama
-```
-
-Contract:
-* This command take no arguments.
-* If an error status is returned, the executable is removed from the list of plugins.
 
 ### The `list` command
 
