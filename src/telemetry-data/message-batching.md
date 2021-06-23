@@ -108,4 +108,42 @@ Rationale:
 
 ## Design Specification
 
-TBD
+* Multiple bacthes will have to be built parallelly and kept active
+* When a new message is received, it will be added to one of the existing bacthes if it meets all the criteria to be added to that batch other wise a new batch will be created for this new message
+* Each batch has a batching window and batching timeout derived from the event timestamp of the first message in that batch
+* Each batch is kept active until the current system time is less than or equal to `batch timeout` of that batch.
+
+The criteria to decide whether a message should be added to an existing batch or a new batch has to be created is as follows:
+
+On message receipt {
+    if `current system time > current event time + max message delay` {
+        reject this message as it's too old
+    } else {
+        if event timestamp fits into the batching window range of any of the active bacthes {
+            pick that batch as the target batch
+            if another message of the same type(conflicting measurement) is present in the target batch {
+                if event timestamp is equal to the conflicting measurement's timestamp {
+                    ignore the current message as duplicate
+                } else {
+                    split the target batch into two from the point of the conflicting message's timestamp
+                    the conflicting message will be the last message in the first split batch
+                    the current message will be added to the second split batch
+                }
+            } else {
+                add this message to the target batch
+            }
+        } else {
+            start a new batch where:
+            batching window start time = current event time
+            if there are no active batches with a batching window start time > current event time {
+                batching window end time = current event time + default batching window size
+            } else {
+                target batch = the nearest active batch for which batching window start time > current event time
+                batching window end time = batch start time of the target batch
+            }
+            batch timeout = batching window end time + `max message delay`
+        }
+    }
+}
+
+This algorithm will accept "messages from the future" as well and will keep building batches with those messages.
