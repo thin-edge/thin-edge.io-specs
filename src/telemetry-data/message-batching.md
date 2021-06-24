@@ -7,8 +7,9 @@ A deterministic message bacthing algorithm that builds batches based on the time
 * **Event time:** The time at which a measurement/event is *generated*
 * **Processing time:** The time at which that measurement/event is *received/processed*
 * **Batching window:** A `batching window` is defined as the maximum allowed gap between the event timestamps of the first message in a batch and the last message in a batch. It is important to note that the `batching window` is based on the *event timestamps*.
-* **Max message delay:** The `maximum message delay` is defined as the maximum acceptable delay between the even generation time and the event processing time for a message received by the batch processor. If an event generated at time `t` is received by the batch processor *after* the maximum acceptable delay, it will considered too old and won't be processed further.
-* **Batching timeout:** The `batching timeout` is the maximum time that the batcher will wait for the last message after a batch has started. The `batching timeout` can be defined as the `first message processing time` + `batching window` + `max message delay`
+* **Max message delay:** The `maximum message delay` is defined as the maximum acceptable delay between the event generation time and the event processing time for a message received by the batch processor. If an event generated at time `t` is received by the batch processor *after* the maximum acceptable delay, it will considered too old and won't be processed further.
+* **Max message deadline** is applied on the "messages from the future" for which the event timestamp is higher than the current processing time. If an event generated at time `t` is received by the batch processor and if that timestamp `t` is more than the maximum acceptable deadline in future, it will considered as too futuristic and won't be processed further. For example, if the `max message deadline` is defined as 20 and if an event with timestamp `t120` is delivered to the batch processor at `T110`, it will be accepted as `t120` < `T110 + 20`. But an event with timestamp `t131` would have been rejected as `t131` > `T110 + 20`.
+* **Batching timeout:** The `batching timeout` is the maximum time that the batcher will wait for the last message after a batch has started. The `batching timeout` can be defined as the `first message's event time` + `batching window` + `max message delay`
 * **Max batch size** is the maximum alloawable size of a batch in bytes (**NOT** just in terms of the number of messages as different messages have different keys of varying size)
 
 ## Requirements
@@ -16,7 +17,8 @@ A deterministic message bacthing algorithm that builds batches based on the time
 * Different measurements generated within a `batching window` must be batched together.
 * Batching should not be just a static periodic batching at regular intervals but instead must be dynamic in such a way that the batching is started on the receipt of the first message in a logical batch and (ideally) ends on the receipt of the last message from that logical batch.
 * The `batching window` helps in limiting the number of messages that get batched up together.
-* The `batching timeout` prevents the batcher from waiting forever to receive the last message in a batch after the batch has started on the receipt of the first message. 
+* The `batching timeout` prevents the batcher from waiting forever to receive the last message in a batch after the batch has started on the receipt of the first message.
+* The `max message deadline` limits the unbounded growth of batches to accommodate messages from the future.
 * While a batch is being built, if a measurement that's already present in the current batch arrives with a different timestamp(meaning it's a different measurement of the same type), a new batch must be started and this new measurement must be added to that batch.
 
 ## Assumptions
@@ -84,7 +86,7 @@ Rationale:
 
 * `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T180`
 * `d1:t190@T210` would trigger the creation of a new batch with the batching window `t190-t240` and a batching timeout at `T260`.
-* When a duplicate of `c1:t130` is received at `T220` while building this second batch, it needs to be rejected because it is too old to be fit into the current batch's batching window. It was not rejected because it was a duplicate, but because it was too old.
+* When a duplicate of `c1:t130` is received at `T220` while building this second batch, it needs to be rejected because it is too old to be fit into the current batch's batching window. It was not rejected because it was a duplicate, but because it was too old. But, if the same message was delivered while the first batch was active, it would have still been rejected, not based on its event timestamp, but because it was a duplicate of the existing `c1` in batch1.
 
 ### UC5: Receiving older unbatched messages after starting a new batch
 
@@ -109,8 +111,10 @@ Rationale:
 The criteria to decide whether a message should be added to an existing batch or a new batch has to be created is as follows:
 
 On message receipt {
-    if `current system time > current event time + max message delay` {
+    if `current event time` < `current system time` - `max message delay` {
         reject this message as it's too old
+    } else if `current event time` > `current system time` + `max message deadline` {
+        reject this message as too futuristic
     } else {
         if event timestamp fits into the batching window range of any of the active bacthes {
             pick that batch as the target batch
