@@ -9,6 +9,7 @@ A deterministic message bacthing algorithm that builds batches based on the time
 * **Batching window:** A `batching window` is defined as the maximum allowed gap between the event timestamps of the first message in a batch and the last message in a batch. It is important to note that the `batching window` is based on the *event timestamps*.
 * **Max message delay:** The `maximum message delay` is defined as the maximum acceptable delay between the even generation time and the event processing time for a message received by the batch processor. If an event generated at time `t` is received by the batch processor *after* the maximum acceptable delay, it will considered too old and won't be processed further.
 * **Batching timeout:** The `batching timeout` is the maximum time that the batcher will wait for the last message after a batch has started. The `batching timeout` can be defined as the `first message processing time` + `batching window` + `max message delay`
+* **Max batch size** is the maximum alloawable size of a batch in bytes (**NOT** just in terms of the number of messages as different messages have different keys of varying size)
 
 ## Requirements
 
@@ -22,16 +23,7 @@ A deterministic message bacthing algorithm that builds batches based on the time
 
 * Messages are delivered to the batcher either in real-time or in near-real-time. That is, a message received by the batcher at processing time `T` can only have an event timestamp `t` <= `T`. This is because there can always be some delay between the time at which the messages is generated(event time) and the time at which that message is delivered to the batcher(processing time) via the MQTT broker.
 * Messages are generated and processed on the same `thin-edge.io` device using the same system clock. This provides us the extra guarantee that the message generation time can never be higher than the message processing time.
-
-### MQTT Ordering Guarantees
-
-The following statements on MQTT ordering guarantees are based on the MQTT 3.1 specification [here](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718105)
-
-* Message ordering is guaranteed by MQTT at a topic level, meaning published messages will be delivered to subscribers in the same order as they were published.
-* QOS 0 can lead to message drops but they will still be delivered in order. That is, if the messages `m1, m2, m3, m4, m5` are published in that order with QOS 0, a subscriber may not get all those messages and might only receive `m1, m3, m5` with m2 and m4 dropped on the way. But the overall order of the delivered messages is still guaranteed. And there won't be any duplicate messages with QOS 0.
-* QOS 1 will prevent message drops but can lead to message duplications. That is, if the messages `m1, m2, m3, m4, m5` are published in that order with QOS 1, a subscriber is guaranteed to get all those messages but with some duplication like `m1, m2, m2, m3, m2, m3, m4, m5`. Even though the ordering is guaranteed even for the duplicate messages, there's a partial reordering happening for the overall flow.
-* QOS 2 will prevent message drops as well as duplication and guarantees ordering as well. That is, if the messages m1, m2, m3, m4, m5 are published in that order with QOS 1, a subscriber is guaranteed to get all those messages in the exact same order with no message loss.
-* Even if QOSes are mixed up, the ordering is guaranteed, but with duplication causing partially out of order messages because of QOS 1.
+* Even though MQTT guarantess ordered delivery of message with QoS 0 and 2 and a partial ordering of messages even with QoS 1 with the possibility of duplicates on a single topic, we can't rely on these guarantees as we have to handle messages coming on different topics as well (as in the case of `collectd`) and MQTT doesn't guarantee any order bewteen messages published to different topics. Refer to MQTT ordering guarantees in the MQTT 3.1 specification [here](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718105) for more details.
 
 ## Usecases
 
@@ -92,13 +84,13 @@ Rationale:
 
 * `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T180`
 * `d1:t190@T210` would trigger the creation of a new batch with the batching window `t190-t240` and a batching timeout at `T260`.
-* When a duplicate of `c1:t130` is received at `T220` while building this second batch, it needs to be rejected because it is too old to be fit into the current batch's batching window.
+* When a duplicate of `c1:t130` is received at `T220` while building this second batch, it needs to be rejected because it is too old to be fit into the current batch's batching window. It was not rejected because it was a duplicate, but because it was too old.
 
 ### UC5: Receiving older unbatched messages after starting a new batch
 
 Message flow:
 
-![Late messages](./message-batching/UC5.svg)
+![Late unbatched messages](./message-batching/UC5.svg)
 
 Rationale:
 
@@ -109,7 +101,8 @@ Rationale:
 ## Design Specification
 
 * Multiple bacthes will have to be built parallelly and kept active
-* When a new message is received, it will be added to one of the existing bacthes if it meets all the criteria to be added to that batch other wise a new batch will be created for this new message
+* When a new message is received, it will be added to one of the existing bacthes if it meets all the criteria to be added to that batch, otherwise a new batch will be created for this new message. The batching crtiteria are explained in detail below.
+* Even if a message can be added to an existing batch based on its timestamp, it might lead to an existing batch being split to avoid cases like conflicting messages in the existing batch or the batch size exceeding `max batch size` with the addition of this new message.
 * Each batch has a batching window and batching timeout derived from the event timestamp of the first message in that batch
 * Each batch is kept active until the current system time is less than or equal to `batch timeout` of that batch.
 
@@ -130,7 +123,11 @@ On message receipt {
                     the current message will be added to the second split batch
                 }
             } else {
-                add this message to the target batch
+                if target batch size + current message size < `max batch size` {
+                    add this message to the target batch
+                } else {
+                    split the target batch into two from the point of the current message's timestamp where:
+                }
             }
         } else {
             start a new batch where:
