@@ -31,7 +31,10 @@ A deterministic message bacthing algorithm that builds batches based on the time
 
 ## Usecases
 
-In the examples defined in the following use-case sections, the `batching window` is fixed as **50** and the `max message delay` is fixed as **20**. That is, if a message `m1` generated at `t100` is received by the batcher at `T110`, then the batcher will wait till `T170` to group any messages that has an embedded timestamp between `t100` and `t150`. Messages with event timestamp less than `t100` and greater than `t150` will be out of this batch even if received before the batching timeout at `T170`.
+In the examples defined in the following use-case sections, the `batching window` is fixed as **50** and the `max message delay` is fixed as **20**.
+That is, if a message `m1` generated at `t100` is received by the batcher at `T110`, then the batcher will wait till `T170` to group any messages that has an embedded timestamp between `t100` and `t150`.
+Messages with event timestamp less than `t100` and greater than `t150` will be out of this batch even if received before the batching timeout at `T170`.
+Similarly, `message leap limit` is also fixed as **20**.
 
 The representation `a5:t50@T60` represents the 5th instance of a measurement of type `a` generated with the event timestamp of `t50` received by the batcher at processing time `T60`.
 
@@ -49,10 +52,11 @@ Message flow:
 
 Rationale:
 
-* `a1:t110@T120` starts a new batch with the batching window `t110-t160` with the batching timeout at `T180`
-* `b1` and `c1` gets added to the same batch as they are within the bounds of batch1's batching window.
-* `d1:t152@T160` starts a new batch as its event timestamp is outside the first batch's batching window of `t110-160` even though it was received before the batch timeout of `T180`. The first batch is not closed at this point as messages from that batch can arrive till the batching timeout at `T180` and it will be kept open until then.
-* `e1:t170@T190` gets added to the second batch itself as it belongs to the batching window of `t152-t202` started by `d2`.
+* `b1:t120@T125` is the first message that's received by the batcher, which starts a new batch with the batching window `t100-t150` with the batching timeout at `T170`. Batching window is started from `t100` instead of the message's event timestamp `t120` to accommodate delayed messages as well like `a1`.
+* `a1:t115@T135` was delivered with a delay, but it is added to the same batch as `b1` as it falls within the batch1 window.
+* `c1` gets added to the same batch as they are within the bounds of batch1's batching window.
+* `d1:t155@T160` starts a new batch as its event timestamp is outside the first batch's batching window of `t100-150` even though it was received before batch1's batch timeout at `T170`. The first batch is not closed at this point as messages from that batch can arrive till the batching timeout at `T170` and it will be kept open until then. Even though the batching window for batch2 was supposed to start from `t135` based on the event timestamp `t155` of `d1`, the batching window of the second batch starts from the end of batch1 from `t150-t200` to avoid an overlap with batch1.
+* `e1:t175@T190` gets added to the second batch itself as it belongs to the batching window of `t150-t200` started by `d2`.
 
 
 ### UC2: Simple batching with batching timeout
@@ -63,10 +67,10 @@ Message flow:
 
 Rationale:
 
-* `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T180`
-* `d1` and `e1` are arrived after the batching timeout and hence a separate batch was started at `T210`. But since they're both within the same batching window, they're added together into a single batch.
+* `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T170`
+* `d1` and `e1` are arrived after the batching timeout and hence a separate batch was started at `T190`. But since they're both within the same batching window, they're added together into a single batch.
 
-### UC3: Multiple batches due to conflicting measurements
+### UC3: Batch split due to conflicting measurements
 
 Message flow:
 
@@ -74,9 +78,11 @@ Message flow:
 
 Rationale:
 
-* `a1:t110@T120` starts a new batch with the batching window `t110-t160` with the batching timeout at `T180`
-* Receipt of `a2:t140@T150` starts a new batch even though its event timestamp is within batch1's batching window as well as it was received before the batching timeout at `T180` because the measurement `a1` of type `a` already exists in the first batch. This second batch is started with a batching window of `t140-t190` with the batching timeout at `T210`. This also results in the first batch's batching window to be reduced from `t110-160` to `t110-t140` with the batching timeout also lowered from `T180 ` to `T160`.
-* `a3:t155@T170` starts a third batch as it can't be added to the second batch either due to the conflict with `a2`. Its batching window would be `t155-t205` with the batch timeout at `T225`. It also results in the shorteing of batch2 with the batching window re-adjusted to `t140-155` with the batching timeout at `T175`.
+* `a1:t120@T125` starts a new batch with the batching window `t100-t150` and batching timeout at `T170`
+* `b1` gets added to the same batch
+* Receipt of `a2:t140@T150` raises a conflict because the measurement `a1` of type `a` already exists in the first batch. To avoid this conflict, a new batch is started by splitting batch1. This second batch is started with a batching window of `t140-t190` with the batching timeout at `T210`. This also results in the first batch's batching window to be reduced from `t100-150` to `t100-t140` with the batching timeout also lowered from `T170 ` to `T160`.
+* `c1` gets added to batch2 itself.
+* `a3:t170@T180` causes yet another conflict in batch2 and results in a third batch as it can't be added to the second batch either due to the conflict with `a2`. Its batching window would be `t170-t220` with the batch timeout at `T240`. It also results in the shorteing of batch2 with the batching window re-adjusted to `t140-170` with the batching timeout at `T190`.
 
 ### UC4: Receiving older already batched messages after starting a new batch
 
@@ -86,9 +92,10 @@ Message flow:
 
 Rationale:
 
-* `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T180`
-* `d1:t190@T210` would trigger the creation of a new batch with the batching window `t190-t240` and a batching timeout at `T260`.
-* When a duplicate of `c1:t130` is received at `T220` while building this second batch, it needs to be rejected because it is too old to be fit into the current batch's batching window. It was not rejected because it was a duplicate, but because it was too old. But, if the same message was delivered while the first batch was active, it would have still been rejected, not based on its event timestamp, but because it was a duplicate of the existing `c1` in batch1.
+* `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T170`
+* When a duplicate of `c1:140` is received at `T160`, it's rejected because it's a duplicate.
+* `d1:t190@T210` would trigger the creation of a new batch with the batching window `t170-t220` and a batching timeout at `T240`.
+* When a duplicate of `c1:t140` is received at `T220` while building this second batch, it needs to be rejected because it is too old to be fit into the current batch's batching window.
 
 ### UC5: Receiving older unbatched messages after starting a new batch
 
@@ -98,16 +105,16 @@ Message flow:
 
 Rationale:
 
-* `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T180`
-* `a2:t175@T190` starts a new batch with batching window `t175-t225` and a batching timeout at `T245`. `b2` is also added to the same batch.
-* When `d1:t145` is received at `T210`, it can't be added to the first batch as it is already closed, even though its event timestamp `t145` falls within the first batch's batching window from `t110-t160`. It can't be added to the second batch either as the second batch's batching window is `t175 - t225`, unless its batching window is adjusted to `t145 - t195`. But then, `b2:t200` which is already in this second batch will have to be moved to a third batch as it doen't fall within the updated batching window of batch2 anymore. The other option is to start a new batch with `d1` for any message with event timestamp in the range `t145 - t175`.
+* `a1` `b1` and `c1` formed the first batch which got closed with the batching timeout at `T170`
+* `a2:t180@T190` starts a new batch with batching window `t160-t210` and a batching timeout at `T245`. `b2` is also added to the same batch.
+* When `d1:t145` is received at `T210`, it can't be added to the first batch as it is already closed, even though its event timestamp `t145` falls within the first batch's batching window from `t100-t150`. It can't be added to the second batch either as it is too old for that batch as well. A third batch can't be created either 
 
 ## Design Specification
 
 * Messages are bacthed based on their event timestamps
-* A single batch can accommodate messages with even timestamps that falls within a `batching window`
+* A single batch can accommodate messages with event timestamps that falls within a `batching window`
 * Multiple bacthes will have to be built parallelly and kept active to accommodate messages having different timestamps that can't be fit into a single batch
-* Each batch has a batching window and batching timeout derived from the event timestamp of the first message in that batch
+* Each batch has a batching window and batching timeout derived from the event timestamp of the first message in that batch. The logic used to derive the batching window is explained below.
 * No two batches will have an overlapping batching window
 * Each batch is kept active until the current system time is less than or equal to `batch timeout` of that batch.
 * An incoming message will be rejected if:
@@ -121,6 +128,7 @@ Rationale:
 
 The detailed batching algorithm is as follows:
 
+```
 On message receipt {
     `current event time` = event timestamp of the message converted to epoch value in UTC
     if `current event time` < `current system time` - `max message delay` {
@@ -161,3 +169,4 @@ On message receipt {
         }
     }
 }
+```
