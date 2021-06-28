@@ -6,26 +6,28 @@ A deterministic message bacthing algorithm that builds batches based on the time
 
 * **Event time:** The time at which a measurement/event is *generated*
 * **Processing time:** The time at which that measurement/event is *received/processed*
-* **Batching window:** A `batching window` is defined as the maximum allowed gap between the event timestamps of the first message in a batch and the last message in a batch. It is important to note that the `batching window` is based on the *event timestamps*.
 * **Max message delay:** The `maximum message delay` is defined as the maximum acceptable delay between the event generation time and the event processing time for a message received by the batch processor. If an event generated at time `t` is received by the batch processor *after* the maximum acceptable delay, it will considered too old and won't be processed further.
-* **Max message deadline** is applied on the "messages from the future" for which the event timestamp is higher than the current processing time. If an event generated at time `t` is received by the batch processor and if that timestamp `t` is more than the maximum acceptable deadline in future, it will considered as too futuristic and won't be processed further. For example, if the `max message deadline` is defined as 20 and if an event with timestamp `t120` is delivered to the batch processor at `T110`, it will be accepted as `t120` < `T110 + 20`. But an event with timestamp `t131` would have been rejected as `t131` > `T110 + 20`.
-* **Batching timeout:** The `batching timeout` is the maximum time that the batcher will wait for the last message after a batch has started. The `batching timeout` can be defined as the `first message's event time` + `batching window` + `max message delay`
+* **Batching window:** is defined as the maximum allowed gap between the event timestamps of the first message in a batch and the last message in a batch. It is important to note that the `batching window` is based on the *event timestamps*.
+* **Batching timeout:** is the maximum time that the batcher will keep a batch open till the last message arrives after a batch has started. The `batching timeout` can be defined as the `batching window` + `max message delay`
+* **Message leap limit** is applied to the "messages from the future" for which the event timestamp is higher than the current processing time. If an event generated at time `t`, received by the batch processor, is more than the maximum acceptable leap limit in future, it will considered as too futuristic and won't be processed further. For example, if the `message leap limit` is defined as 20 and if an event with timestamp `t120` is delivered to the batch processor at `T110`, it will be accepted, as `t120` < `T110 + 20`. But an event with timestamp `t131` would have been rejected as `t131` > `T110 + 20`.
 * **Max batch size** is the maximum alloawable size of a batch in bytes (**NOT** just in terms of the number of messages as different messages have different keys of varying size)
 
 ## Requirements
 
 * Different measurements generated within a `batching window` must be batched together.
-* Batching should not be just a static periodic batching at regular intervals but instead must be dynamic in such a way that the batching is started on the receipt of the first message in a logical batch and (ideally) ends on the receipt of the last message from that logical batch.
+* Different strategies can be applied to define the start of each new batching window. The simplest one would be to start a new window at a regular pace, each just after the previous one. In practice, this would lead to empty batch and and arbitrary cut in the middle of a "logical batch". Hence, we prefer to wait for a first message to start a new batch and (ideally) close that batch on the receipt of the last message from that logical batch.
 * The `batching window` helps in limiting the number of messages that get batched up together.
 * The `batching timeout` prevents the batcher from waiting forever to receive the last message in a batch after the batch has started on the receipt of the first message.
-* The `max message deadline` limits the unbounded growth of batches to accommodate messages from the future.
-* While a batch is being built, if a measurement that's already present in the current batch arrives with a different timestamp(meaning it's a different measurement of the same type), a new batch must be started and this new measurement must be added to that batch.
-
+* The `message leap limit` limits the unbounded growth of batches to accommodate messages from the future.
+* The `max batch size` limits the unbounded growth of individual batches.
+* While a batch is being built, if a measurement that's already present in the current batch arrives with a different timestamp(meaning it's a different measurement of the same type), the new message and the existing message must be put into two different batches to avoid a conflict.
+* If a message in a batch has to be replaced by another message of the same type, it has to be done in a deterministic manner based on their event timestamps. But dropping messages in favour of another one is not preferred, if there isn't a string case for it.
 ## Assumptions
 
 * Messages are delivered to the batcher either in real-time or in near-real-time. That is, a message received by the batcher at processing time `T` can only have an event timestamp `t` <= `T`. This is because there can always be some delay between the time at which the messages is generated(event time) and the time at which that message is delivered to the batcher(processing time) via the MQTT broker.
 * Messages are generated and processed on the same `thin-edge.io` device using the same system clock. This provides us the extra guarantee that the message generation time can never be higher than the message processing time.
 * Even though MQTT guarantess ordered delivery of message with QoS 0 and 2 and a partial ordering of messages even with QoS 1 with the possibility of duplicates on a single topic, we can't rely on these guarantees as we have to handle messages coming on different topics as well (as in the case of `collectd`) and MQTT doesn't guarantee any order bewteen messages published to different topics. Refer to MQTT ordering guarantees in the MQTT 3.1 specification [here](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718105) for more details.
+* The event timestamps will be compared against each other based on their UTC time representation. If the timestamp carries a different timezone, it will be converted to its equivalent epoch value in UTC.
 
 ## Usecases
 
@@ -102,49 +104,60 @@ Rationale:
 
 ## Design Specification
 
-* Multiple bacthes will have to be built parallelly and kept active
-* When a new message is received, it will be added to one of the existing bacthes if it meets all the criteria to be added to that batch, otherwise a new batch will be created for this new message. The batching crtiteria are explained in detail below.
-* Even if a message can be added to an existing batch based on its timestamp, it might lead to an existing batch being split to avoid cases like conflicting messages in the existing batch or the batch size exceeding `max batch size` with the addition of this new message.
+* Messages are bacthed based on their event timestamps
+* A single batch can accommodate messages with even timestamps that falls within a `batching window`
+* Multiple bacthes will have to be built parallelly and kept active to accommodate messages having different timestamps that can't be fit into a single batch
 * Each batch has a batching window and batching timeout derived from the event timestamp of the first message in that batch
+* No two batches will have an overlapping batching window
 * Each batch is kept active until the current system time is less than or equal to `batch timeout` of that batch.
+* An incoming message will be rejected if:
+  * Its timestamp is less than `maximum message delay` allowed for a message
+  * It is a duplicate of another message that's present in an active batch
+  * Its timestamp is greater than the `message leap limit`
+* An incoming message will be added to one of the existing bacthes if it meets all the criteria to be added to that batch, otherwise a new batch with a different batching window will be created for this new message. The batching crtiteria are explained in detail below.
+* An existing batch will be split to accommodate a new incoming message if:
+  * The addition of the new message will cause the target batch size to exceed the `max batch size`
+  * The target batch already contains another conflicting message of the same type with a different timestamp (another instance of the same message)
 
-The criteria to decide whether a message should be added to an existing batch or a new batch has to be created is as follows:
+The detailed batching algorithm is as follows:
 
 On message receipt {
+    `current event time` = event timestamp of the message converted to epoch value in UTC
     if `current event time` < `current system time` - `max message delay` {
         reject this message as it's too old
-    } else if `current event time` > `current system time` + `max message deadline` {
+    } else if `current event time` > `current system time` + `message leap limit` {
         reject this message as too futuristic
     } else {
         if event timestamp fits into the batching window range of any of the active bacthes {
-            pick that batch as the target batch
-            if another message of the same type(conflicting measurement) is present in the target batch {
+            pick that batch as the `target batch`
+            if another conflicting message of the same type is present in the target batch {
                 if event timestamp is equal to the conflicting measurement's timestamp {
                     ignore the current message as duplicate
                 } else {
-                    split the target batch into two from the point of the conflicting message's timestamp
-                    the conflicting message will be the last message in the first split batch
-                    the current message will be added to the second split batch
+                    split the target batch into two, in such a way that the current message and the conflicting message are in different batches
                 }
             } else {
-                if target batch size + current message size < `max batch size` {
+                if `target batch size` + `current message size` < `max batch size` {
                     add this message to the target batch
                 } else {
                     split the target batch into two from the point of the current message's timestamp where:
                 }
             }
         } else {
-            start a new batch where:
-            batching window start time = current event time
-            if there are no active batches with a batching window start time > current event time {
-                batching window end time = current event time + default batching window size
+            start a new batch with a new batching window where:
+            if there are no active batches with a `batch end time` < `current event time` {
+                `batch start time` = `current event time` - `max message delay`
             } else {
-                target batch = the nearest active batch for which batching window start time > current event time
-                batching window end time = batch start time of the target batch
+                target batch = the nearest active batch for which `batch end time` < `current event time`
+                `batch start time` = max(`current event time` - `max message delay`, target batch's `batch end time`)
             }
-            batch timeout = batching window end time + `max message delay`
+            if there are no active batches with a `batch start time` > `current event time` {
+                `batch end time` = `batch start time` + `default batching window size`
+            } else {
+                target batch = the nearest active batch for which `batch start time` > `current event time`
+                `batch end time` = min(`batch start time` + `default batching window size`, target batch's `batch window start time`)
+            }
+            batch timeout = `batch end time` + `max message delay`
         }
     }
 }
-
-This algorithm will accept "messages from the future" as well and will keep building batches with those messages.
