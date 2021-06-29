@@ -8,3 +8,4 @@
 ## Software management
 - [Software management](software-management/README.md)
     - [Package Manager Plugin API](software-management/plugin-api.md)
+    - [Contract between Mapper and C8Y](software-management/contract-mapper-c8y.md)
