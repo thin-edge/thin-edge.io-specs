@@ -24,8 +24,7 @@ A deterministic message bacthing algorithm that builds batches based on the time
 * If a message in a batch has to be replaced by another message of the same type, it has to be done in a deterministic manner based on their event timestamps. But dropping messages in favour of another one is not preferred, if there isn't a string case for it.
 ## Assumptions
 
-* Messages are delivered to the batcher either in real-time or in near-real-time. That is, a message received by the batcher at processing time `T` can only have an event timestamp `t` <= `T`. This is because there can always be some delay between the time at which the messages is generated(event time) and the time at which that message is delivered to the batcher(processing time) via the MQTT broker.
-* Messages are generated and processed on the same `thin-edge.io` device using the same system clock. This provides us the extra guarantee that the message generation time can never be higher than the message processing time.
+* There are no assumptions made on the relation between event time and processing time like `t <= T` as it can't be guaranteed due to factors like events coming from external devices with a different clock, leap seconds etc. Because of these limitations, we need to handle the cases where `t <= T` as well as `t > T`.
 * Even though MQTT guarantess ordered delivery of message with QoS 0 and 2 and a partial ordering of messages even with QoS 1 with the possibility of duplicates on a single topic, we can't rely on these guarantees as we have to handle messages coming on different topics as well (as in the case of `collectd`) and MQTT doesn't guarantee any order bewteen messages published to different topics. Refer to MQTT ordering guarantees in the MQTT 3.1 specification [here](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718105) for more details.
 * The event timestamps will be compared against each other based on their UTC time representation. If the timestamp carries a different timezone, it will be converted to its equivalent epoch value in UTC.
 
@@ -57,6 +56,8 @@ Rationale:
 * `c1` gets added to the same batch as they are within the bounds of batch1's batching window.
 * `d1:t155@T160` starts a new batch as its event timestamp is outside the first batch's batching window of `t100-150` even though it was received before batch1's batch timeout at `T170`. The first batch is not closed at this point as messages from that batch can arrive till the batching timeout at `T170` and it will be kept open until then. Even though the batching window for batch2 was supposed to start from `t135` based on the event timestamp `t155` of `d1`, the batching window of the second batch starts from the end of batch1 from `t150-t200` to avoid an overlap with batch1.
 * `e1:t175@T190` gets added to the second batch itself as it belongs to the batching window of `t150-t200` started by `d2`.
+* `g1` starts a third batch
+* `f1` is rejected without being added to the third batch or starting a new batch as its event timestamp `t215` is less than the maximum acceptable delay of `t240` when it's delivered at `T260`.
 
 
 ### UC2: Simple batching with batching timeout
