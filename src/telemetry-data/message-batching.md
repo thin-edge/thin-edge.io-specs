@@ -51,11 +51,11 @@ Message flow:
 
 Rationale:
 
-* `b1:t120@T125` is the first message that's received by the batcher, which starts a new batch with the batching window `t100-t150` with the batching timeout at `T170`. Batching window is started from `t100` instead of the message's event timestamp `t120` to accommodate delayed messages as well like `a1`.
+* `b1:t120@T125` is the first message that's received by the batcher, which starts a new batch with the batching window `t105-t155` with the batching timeout at `T175`. Batching window is started from `t105` instead of the message's event timestamp `t120` to accommodate delayed messages as well like `a1`.
 * `a1:t115@T135` was delivered with a delay, but it is added to the same batch as `b1` as it falls within the batch1 window.
 * `c1` gets added to the same batch as they are within the bounds of batch1's batching window.
-* `d1:t155@T160` starts a new batch as its event timestamp is outside the first batch's batching window of `t100-150` even though it was received before batch1's batch timeout at `T170`. The first batch is not closed at this point as messages from that batch can arrive till the batching timeout at `T170` and it will be kept open until then. Even though the batching window for batch2 was supposed to start from `t135` based on the event timestamp `t155` of `d1`, the batching window of the second batch starts from the end of batch1 from `t150-t200` to avoid an overlap with batch1.
-* `e1:t175@T190` gets added to the second batch itself as it belongs to the batching window of `t150-t200` started by `d2`.
+* `d1:t160@T165` starts a new batch as its event timestamp is outside the first batch's batching window of `t105-155` even though it was received before batch1's batch timeout at `T175`. The first batch is not closed at this point as messages from that batch can arrive till the batching timeout at `T170` and it will be kept open until then. Even though the batching window for batch2 was supposed to start from `t135` based on the event timestamp `t160` of `d1`, the batching window of the second batch starts from the end of batch1 from `t155-t205` to avoid an overlap with batch1.
+* `e1:t175@T190` gets added to the second batch itself as it belongs to the batching window of `t155-t205` started by `d2`.
 * `g1` starts a third batch
 * `f1` is rejected without being added to the third batch or starting a new batch as its event timestamp `t215` is less than the maximum acceptable delay of `t240` when it's delivered at `T260`.
 
@@ -155,10 +155,10 @@ On message receipt {
         } else {
             start a new batch with a new batching window where:
             if there are no active batches with a `batch end time` < `current event time` {
-                `batch start time` = `current event time` - `max message delay`
+                `batch start time` = `current event processing time` - `max message delay`
             } else {
                 target batch = the nearest active batch for which `batch end time` < `current event time`
-                `batch start time` = max(`current event time` - `max message delay`, target batch's `batch end time`)
+                `batch start time` = max((`current event processing time` - `max message delay`), target batch's `batch end time`)
             }
             if there are no active batches with a `batch start time` > `current event time` {
                 `batch end time` = `batch start time` + `default batching window size`
