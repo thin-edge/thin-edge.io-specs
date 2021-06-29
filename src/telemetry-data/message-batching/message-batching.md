@@ -47,7 +47,7 @@ The batch color schemes used in the images in the use-case sections are defined 
 
 Message flow:
 
-![Batching window](./message-batching/UC1.svg)
+![Batching window](UC1.svg)
 
 Rationale:
 
@@ -64,7 +64,7 @@ Rationale:
 
 Message flow:
 
-![Batching timeout](./message-batching/UC2.svg)
+![Batching timeout](UC2.svg)
 
 Rationale:
 
@@ -75,7 +75,7 @@ Rationale:
 
 Message flow:
 
-![Conflicting measurements](./message-batching/UC3.svg)
+![Conflicting measurements](UC3.svg)
 
 Rationale:
 
@@ -89,7 +89,7 @@ Rationale:
 
 Message flow:
 
-![Late duplicate messages](./message-batching/UC4.svg)
+![Late duplicate messages](UC4.svg)
 
 Rationale:
 
@@ -102,7 +102,7 @@ Rationale:
 
 Message flow:
 
-![Late unbatched messages](./message-batching/UC5.svg)
+![Late unbatched messages](UC5.svg)
 
 Rationale:
 
