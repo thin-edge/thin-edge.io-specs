@@ -22,4 +22,5 @@ Replcaing older measurements with newer ones can be done as the simpler interim 
 ## How to handle duplicate messages(same messages with same type, value and timestamp delivered multiple times)?
 
 The current specification proposes to reject duplicate messages which can be identified based on their timestamp and their message type.
+Another option is to have the batcher subscribe to the MQTT broker with QoS 2, so that it doesn't receive duplicate messages at all.
 Other smarter alternatives can be explored in the future.
