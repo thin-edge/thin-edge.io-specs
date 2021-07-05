@@ -34,7 +34,7 @@ UC1: | "Report SW List"
 --- | --- 
 **Purpose** | The device reports a list of current installed SW packages to the cloud. Therefore all Package-Managers are involved.
 **Trigger** | **TO-BE-DECIDED-#1:** Just on Device/Agent start? Or somehow periodically? (Last might capture also manually installed packages) <br/>See also "Software Management Study" in archbee: <br/>https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>-> There check section "Update Profile Operation" and search for "periodically".
-&nbsp;| More details about the interface between SM mapper and Cloud are defined in: TODO: !!add link to "contract between mapper and C8Y".
+&nbsp;| TODO: add link to more details about that use-case.
 
 &nbsp;
 &nbsp;
@@ -60,7 +60,6 @@ UC3: | "Sync SW List"
 --- | --- 
 **Purpose** | Sync Software List of Cumulocity. In Cumulocity it has been replaced with the "Update Software".<br/> For now that use-case it out of scope for thin-edge.<br/> See also "Cumulocity Use Case: Sync Software List" in archbee: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/UuDcppPEYlD9alaF7y_e7
 **Trigger** | 
-&nbsp;| More details about the interface between SM mapper and Cloud are defined in: TODO: !!add link to "contract between mapper and C8Y".
 
 &nbsp;
 &nbsp;
@@ -73,7 +72,6 @@ UC4: | "Update Profile"
 --- | --- 
 **Purpose** | Update Profile Operation of Cumulocity. A profile contains beside a SW list also a desired Firmware and Configuration.<br/> Firmware-Management and Coniguration-Management are planned later for thin-edge, so that use-case is currently not relevant.
 **Trigger** | 
-&nbsp;| More details about the interface between SM mapper and Cloud are defined in: TODO: !!add link to "contract between mapper and C8Y".
 
 &nbsp;
 &nbsp;
@@ -86,7 +84,7 @@ UC5: | "Install/Remove SW Package"
 --- | --- 
 **Purpose** | Installs or removes one or more SW packages on the Device. Therefore the Package-Manager that manages the relevant package is involved.
 **Trigger** | UC2 ("Update SW List")
-&nbsp;| More details about the interface between SM mapper and Cloud are defined in: TODO: !!add link to "contract between mapper and C8Y".
+&nbsp;| Detailed spec for that use-case is here (same as for UC2): [src/software-management/usecase-update-swlist.md](/src/software-management/usecase-update-swlist.md)
 
 
 
