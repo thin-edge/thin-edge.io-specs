@@ -28,7 +28,7 @@ Name | "Cloud"
 &nbsp;| (2) The cloud gets feedback from SM mapper (status "executing") when update was started.
 &nbsp;| (3) The cloud gets feedback from SM mapper (status "successful") when update was sucessfully processed.
 &nbsp;|&nbsp;
-&nbsp;| TODO: add link to more details about the interface between SM mapper and Cloud ("contract between mapper and C8Y").
+&nbsp;| Spec about details of interface between Cloud and SM Mapper is under construction. See [Ticket CIT-439](https://cumulocity.atlassian.net/browse/CIT-439)
 
 &nbsp;
 &nbsp;
@@ -43,7 +43,7 @@ Name | "SM mapper"
 **Sequence** | (1) When the SM mapper receives an update request from Cloud it forwards the request to the SM agent. If the sw-list contained in the Cloud request does not match the SM agent's interface translation has to be done by the SM mapper.
 &nbsp;| (2) SM agent sends feedback to cloud (status "executing"). 
 &nbsp;|&nbsp;
-&nbsp;| TODO: add link to more details about the interface between SM mapper and SM agent.
+&nbsp;| Spec about details of interface between SM Mapper and SM Agent is under construction. See [Ticket CIT-411](https://cumulocity.atlassian.net/browse/CIT-411)
 
 &nbsp;
 &nbsp;
