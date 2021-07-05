@@ -13,7 +13,7 @@ starting from the very right side with the actor "Cloud" reaching to the very le
 actor "Package Manager". Further details (if any) are defined in linked 
 sub-specifications.
 
-Further explanations about diagram's elements it's interpretation could be found below the diagram.
+Further explanations about diagram's elements or it's interpretation could be found below the diagram.
 
 
 ![Sequence Diagram Update SW-list](/src/software-management/uc-update-swlist.png)
