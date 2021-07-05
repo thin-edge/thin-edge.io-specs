@@ -68,7 +68,15 @@ sequenceDiagram
     end
 ```
 
-The software list is sent before marking the operation itself `SUCCESSFUL` or `FAILED` is necessary, because otherwise the cloud wouldn't know what the updated software list is. If the software list is published after marking the operation successful, and if sending the list fails, the cloud will show that the software update operation succeeded, but will continue showing the old software list which is obsolete.
+While processing the software update list, all the packages to be uninstalled are processed first,
+before installing the ones to be installed as that offers a more predictable behaviour.
+
+While installing/uinstalling the modules one by one, we have the option to either fail-fast as soon as one installation/uninstallation fails or keep track of the failures and continue installing/uninstalling the rest of the software modules.
+Fail-fast would be a better choice as in the case of a failure, the user is more likely to retry that operation after making any changes to the original software update list that he prepared.
+
+The software list is sent before marking the operation itself `SUCCESSFUL` or `FAILED` is necessary, because otherwise the cloud wouldn't know what the updated software list is.
+If the software list is published after marking the operation successful, and if sending the list fails,
+the cloud will show that the software update operation succeeded, but will continue showing the old software list which is obsolete.
 
 # Thin Edge JSON Software List
 
