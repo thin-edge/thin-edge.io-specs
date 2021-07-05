@@ -47,7 +47,7 @@ UC2: | "Update SW List"
 --- | --- 
 **Purpose** | Installing or removing SW package on the device.
 **Trigger** | Request coming from cloud.
-&nbsp;| More details about the interface between SM mapper and Cloud are defined in: TODO: !!add link to "contract between mapper and C8Y".
+&nbsp;| Detailed spec for that use-case is here: [src/software-management/usecase-update-swlist.md](/src/software-management/usecase-update-swlist.md)
 
 &nbsp;
 &nbsp;
