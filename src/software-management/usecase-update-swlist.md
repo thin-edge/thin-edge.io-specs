@@ -5,7 +5,7 @@ That document specifies the "Software Management" use-case "Update SW List".
 The purpose of the use-case is to install new software or removing existing from
 Cloud side on the device.
 For more information about the context and other use-cases see "Software 
-Management" use-case specification (TODO: !!add link!!).
+Management" use-case specification in: [src/software-management/README.md](/src/software-management/README.md)
 
 The sequence diagram below indentifies all involved components as well as all 
 message flows between those. Thereby the components are represented as objects,
@@ -28,7 +28,7 @@ Name | "Cloud"
 &nbsp;| (2) The cloud gets feedback from SM mapper (status "executing") when update was started.
 &nbsp;| (3) The cloud gets feedback from SM mapper (status "successful") when update was sucessfully processed.
 &nbsp;|&nbsp;
-&nbsp;| More details about the interface between SM mapper and Cloud are defined in: TODO: !!add link to "contract between mapper and C8Y".
+&nbsp;| TODO: add link to more details about the interface between SM mapper and Cloud ("contract between mapper and C8Y").
 
 &nbsp;
 &nbsp;
@@ -43,7 +43,7 @@ Name | "SM mapper"
 **Sequence** | (1) When the SM mapper receives an update request from Cloud it forwards the request to the SM agent. If the sw-list contained in the Cloud request does not match the SM agent's interface translation has to be done by the SM mapper.
 &nbsp;| (2) SM agent sends feedback to cloud (status "executing"). 
 &nbsp;|&nbsp;
-&nbsp;| More details about the interface between SM mapper and SM agent are defined in: TODO: !!add link to "interface specification between SM agent and SM mapper".
+&nbsp;| TODO: add link to more details about the interface between SM mapper and SM agent.
 
 &nbsp;
 &nbsp;
@@ -59,7 +59,7 @@ Name | "SM agent"
 &nbsp;| (2) Agent iterates over the sw-list that is contained in the SM mappers request. <br/><br/> **TO-BE-DECIDED-#1:** Some delta comparision shall occur at some place, to avoid installing already installed packages and avoid removing not existing ones. To be decided whether delta-comparision shall occur in SM Agent or Package Manager Plugin. (?) <br/><br/> **TO-BE-DECIDED-#2:** Two options for ordering sw-list: Option 1: Keeping order inside sw-list from Cloud to enable Cloud to dictate the order of processing. That would allow the cloud to manage package dependencies, or to decide to process all packages of one Package Manager at once. Option 2: Hardcoding some as best expected order into the agent (e.g. to process package type by package type to avoid potential swapping between multiple triggered Package Managers). (?)<br/>
 &nbsp;| For each particular package the command ("install" or "remove") is send to responsible Package Manager Plugin. "Command" and "responsible Package Manager Plugin" are determined based on information that are part of the sw-list for each package.
 &nbsp;|&nbsp;
-&nbsp;| More details about the interface between SM mapper and SM agent are defined in: TODO: !!add link to "interface specification between SM agent and SM mapper".
+&nbsp;| For detail of interface between SM agent and Package Manager Plugin see [src/software-management/plugin-api.md](/src/software-management/plugin-api.md)
 
 &nbsp;
 &nbsp;
@@ -75,7 +75,7 @@ Name | Package Manager Plugin
 &nbsp;| (2) Receives command install or removed including Package name from SM agent, and instructs according Package Manager to do so.
 &nbsp;| (3) Receives finalize command from SM agent to do some finish action, if any.
 &nbsp;|&nbsp;
-&nbsp;| More details about the interface between SM mapper and Package Manager Plugin are defined in: TODO: !!add link to "interface specification between SM agent and SM mapper".
+&nbsp;| For detail of interface between SM agent and Package Manager Plugin see [src/software-management/plugin-api.md](/src/software-management/plugin-api.md)
 
 Open Topcis
 ===========
