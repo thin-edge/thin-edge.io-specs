@@ -20,7 +20,7 @@ In the middle of the diagram **thin-edge + mosquitto** are visible as system. To
 
 At right side actor **Cloud** represents Cumulocity or another potential cloud.
 
-At left side multiple **Package-Manager** actors are placed. A Package-Manager is a SW component that supported to install or remove SW packages on the Device (e.g. Debian's "APT", Canonical's "Snap" or Red Hat’s “RPM”). Thin-edge "SW Management" concept required that one or more Package-Managers are supported by the Device's SW system.
+At left side multiple **Package-Manager** actors are placed. A Package-Manager is a SW component that supportes to install or remove SW packages on the Device (e.g. Debian's "APT", Canonical's "Snap" or Red Hat’s “RPM”). Thin-edge "SW Management" concept requires that one or more Package-Managers are provided by the Device's SW system.
 
 Finally on left side actors **FW (Firmware)-Manager** and **Config-Manager** are denoted. Both are shown here to point out that for now Firmware and Configuration are out of scope of that specification. Note that in the diagram both have no connection to any relevant use-case. 
 
@@ -33,7 +33,7 @@ All use-case above are prefixed with a unique identified (as UC\<i\>), just for 
 UC1: | "Report SW List"
 --- | --- 
 **Purpose** | The device reports a list of current installed SW packages to the cloud. Therefore all Package-Managers are involved.
-**Trigger** | **TO-BE-DECIDED-#1:** Just on Device/Agent start? Or somehow periodically? (Last might capture also manually installed packages) <br/>See also "Software Management Study" in archbee: <br/>https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>-> There check section "Update Profile Operation" and search for "periodically".
+**Trigger** | **TO-BE-DECIDED-#1:** Just on Device/Agent start? Or somehow periodically? (Last might capture also manually installed packages). For taking decicision see also "Software Management Study" in archbee: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>-> There check section "Update Profile Operation" and search for "periodically".
 &nbsp;| TODO: add link to more details about that use-case.
 
 &nbsp;
