@@ -10,11 +10,6 @@ sequenceDiagram
     alt If SoftwareUpdateOperation in-progress flag found in persistence store
         SM Agent->>Cloud Mapper: SoftwareUpdateOperation FAILED
     end
-    loop Each Plugin
-        SM Agent->>Software Plugin: plugin-cmd list
-        Software Plugin-->>SM Agent: list cmd output
-    end
-    SM Agent->>Cloud Mapper: CombinedSoftwareList
 ```
 
 On every startup, sm-agent checks if a `SoftwareUpdateOperation` was in progress before the startup, from its persistent store. If yes, it means that the sm-agent crashed or the device got restarted while the update operation was in-progress. As long as we don't support resumption of software update operations, it's better to just mark the last operation failed so that the users can retry.
@@ -23,7 +18,25 @@ For now, persisting just a flag that the `SoftwareUpdateOperation` is in-progres
 
 # SM Agent Runtime
 
-The sequence of operations and message exchanges happening in the main execution loop of sm-agent while it's waiting for incoming software-update opearations and reacting to those received.
+The SM Agent needs to handle two kinds of requests from the cloud: software list request and software update request.
+
+The sequence of operations on the receipt of a software list request is as follows:
+
+```mermaid
+sequenceDiagram
+    participant Software Plugin
+    participant SM Agent
+    participant Cloud Mapper
+    Cloud Mapper-->>SM Agent: SoftwareListRequest
+    loop Each Plugin
+        SM Agent->>Software Plugin: plugin-cmd list
+        Software Plugin-->>SM Agent: list cmd output
+    end
+    SM Agent->>Cloud Mapper: SoftwareListResponse
+```
+
+
+The sequence of operations on the receipt of a software update request is as follows:
 
 
 ```mermaid
@@ -53,6 +66,12 @@ sequenceDiagram
         SM Agent->>Software Plugin: plugin-cmd finalize
     end
 
+    loop Each plugin
+        SM Agent->>Software Plugin: plugin-cmd list
+        Software Plugin-->>SM Agent: list cmd output
+    end
+    SM Agent->>Cloud Mapper: SoftwareList
+
     alt If SoftwareUpdateOperation successful and SoftwareListStatus successful
         SM Agent->>Cloud Mapper: SoftwareUpdateOperation SUCCESSFUL
     else
@@ -60,15 +79,14 @@ sequenceDiagram
     end
 
     SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
-
-    Cloud Mapper-->>SM Agent: Get CombinedSoftwareList
-    loop Each plugin
-        SM Agent->>Software Plugin: plugin-cmd list
-        Software Plugin-->>SM Agent: list cmd output
-    end
-    SM Agent->>Cloud Mapper: CombinedSoftwareList
-
 ```
+
+The SM Agent will process only one `SoftwareUpdateOperation` at a time.
+If a duplicate operation is received while in the middle of processing one operation, the new request will be ignored.
+Ignorning is okay as the SM Agent expects to retrieve it later on, after the current operation processing is complete, from the mapper via its PENDING requests queue.
+The mapper can choose to persist such PENDING requests on its own if the cloud that it supports doesn't support such queueing.
+But, the SM Agent won't persist such requests.
+
 
 While processing the software update list, all the packages to be uninstalled are processed first,
 before installing the ones to be installed as that offers a more predictable behaviour.
@@ -76,16 +94,53 @@ before installing the ones to be installed as that offers a more predictable beh
 While installing/uinstalling the modules one by one, we have the option to either fail-fast as soon as one installation/uninstallation fails or keep track of the failures and continue installing/uninstalling the rest of the software modules.
 Fail-fast would be a better choice as in the case of a failure, the user is more likely to retry that operation after making any changes to the original software update list that he prepared.
 
-# Thin Edge JSON Software List
+# Thin Edge JSON topic structures
 
-Topic to publish software list to: `tedge/software-list`
+A topic scheme like `tedge/inbound/<component>/<action>` is used for any inbound operation requests from the device to the cloud.
+For the corresponding operation response need to be sent to `tedge/outbound/<component>/<action>`.
+
+For example, the request to fetch the software list from the agent needs to be sent to `tedge/inbound/software/list` and the corresponding software list response will be sent to `tedge/outbound/software/list`.
+Similar scheme can be used for other operations as well in future as captured in the following table:
+
+| Operation          | Request Topic                     | Response Topic                     |
+| ------------------ | --------------------------------- | ---------------------------------- |
+| Software List      | `tedge/inbound/software/list`     | `tedge/outbound/software/list`     |
+| Software Update    | `tedge/inbound/software/update`   | `tedge/outbound/software/update`   |
+| Software List Sync | `tedge/inbound/software/sync`     | `tedge/outbound/software/sync`     |
+| Update Profile     | `tedge/inbound/profile/update`    | `tedge/outbound/profile/update`    |
+| Get Configuration  | `tedge/inbound/configuration/get` | `tedge/outbound/configuration/get` |
+| Set Configuration  | `tedge/inbound/configuration/set` | `tedge/outbound/configuration/set` |
+| Get Log            | `tedge/inbound/log/get`           | `tedge/outbound/log/get`           |
+| Restart  device    | `tedge/inbound/device/restart`    | `tedge/outbound/device/restart`    |
+
+# Software List Operation
+
+## Thin Edge JSON Software List Request
+
+
+Topic to publish the software list request to: `tedge/inbound/software/list`
+
+Request payload: 
+
+```json
+{
+    "id": 123
+}
+```
+
+Some unique id must be generated by the requestor and this `id` is sent back in the response for correlation.
+
+## Thin Edge JSON Software List Response
+
+Topic to subscribe for the software list response: `tedge/outbound/software/list`
 
 Payload format:
 
 ```json
 {
     "id": 123,
-    "software-list": [
+    "status": "SUCCESSFUL",
+    "list": [
         {
             "type": "debian",
             "list": [
@@ -116,7 +171,7 @@ Payload format:
 }
 ```
 
-## Payload fields
+**Payload fields:**
 
 In the top-level array, there will be one entry each for every plugin on the device, if the plugin reports a non-empty software list, when queried for one.
 
@@ -126,30 +181,21 @@ In the top-level array, there will be one entry each for every plugin on the dev
 * `name` in the software module JSON captures the name of the software module, which is mandatory.
 * `version` in the software module JSON captures the name of the software module, which is optional.
 
-## Software list response
-
-When the mapper receives software list, it needs to confirm that the list could be successfully forwarded to the cloud. If it fails to do so, an error must be reported back as well. Such responses from the mapper should be published to `tedge/software-list-status` in the following format:
+If fetching the software list had failed, the reponse would have indicated a failure as follows:
 
 ```json
 {
     "id": 123,
     "status": "FAILED",
-    "reason": "List too long"
+    "reason": "Request timed-out"
 }
 ```
 
-* `id` must be the same id that was sent in the software list message. It is mandatory.
-* `status` "SUCCESSFUL" means the software list was successfully processed by the mapper. "FAILED" indicates otherwise. This field is mandatory.
-* `reason` can describe in detail, the cause of the failure. It is an optional field.
+# Software Update Operation
 
+## Thin Edge JSON Software Update Request
 
-# Thin Edge JSON Software Update Operations
-
-The software update operations received from the cloud and the corresponding responses to be sent by the sm-agent are captured below.
-
-## Incoming Software Update Operation
-
-Topic to subscribe to: `tedge/operations/software-update`
+Topic to subscribe to: `tedge/inbound/software/update`
 
 Payload format:
 
@@ -193,19 +239,22 @@ Payload format:
 
 **Why there's no `id` in the request to distinguish one SW update request from another?**
   
-Currently we only support one software update operation at a time as Cumulocity only allows one software update operation to be sent from the cloud at a time. Users can't send another one until the last one either succeeds or fails. Since there are no concurrent opeartions possible, Cumulocity doesn't need an `id` and hence they don't send one in the requests either. Once Cumulocity supports concurrent software update operations or once we support another cloud that supports concurrent software update operations, we can introduce the `id` field.
+Currently we only support one software update operation at a time.
+If a duplicate operation is received while in the middle of processing another operation, the new request will be ignored.
+Ignorning is okay as that ignored operation will still be present in the PENDING requests queue and can be retrieved back after the current operation processing is complete.
+Since there's always only request that's under process, every reponse is assumed to be for the last request that was sent.
 
-## Outgoing Software Update Operation Response
+## Thin Edge JSON Software Update Response
 
 Once a software-update operation is received, it must be acknowledged with an EXECUTING response, followed by a SUCCESSFUL or FAILED response.
 
-Topic to publish to: `tedge/operations-status/software-update`
+Topic to subscribe for the software update response: `tedge/outbound/software/update`
 
 ### Executing Status Payload
 
 ```json
 {
-    "software-update-status": "EXECUTING"
+    "status": "EXECUTING"
 }
 ```
 
@@ -213,49 +262,31 @@ Topic to publish to: `tedge/operations-status/software-update`
 
 ```json
 {
-    "software-update-status": "SUCCESSFUL"
-}
-```
-
-### Failed Status Payload
-
-```json
-{
-    "software-update-status":"FAILED",
-    "reason":"Partial failure",
-    "details":[
+    "status": "SUCCESSFUL",
+    "current-software-list": [
         {
-            "type":"debian",
-            "list":[
+            "type": "debian",
+            "list": [
                 {
-                    "name":"nodered",
-                    "version":"1.0.0",
-                    "action":"install",
-                    "status":"SUCCESSFUL"
+                    "name": "nodered",
+                    "version": "1.0.0",
                 },
                 {
-                    "name":"collectd",
-                    "version":"5.7",
-                    "action":"install",
-                    "status":"FAILED",
-                    "reason":"Network timeout"
+                    "name": "collectd",
+                    "version": "5.7"
                 }
             ]
         },
         {
-            "type":"docker",
-            "list":[
+            "type": "docker",
+            "list": [
                 {
-                    "name":"nginx",
-                    "version":"1.21.0",
-                    "action":"install",
-                    "status":"SUCCESSFUL"
+                    "name": "nginx",
+                    "version": "1.21.0",
                 },
                 {
-                    "name":"mongodb",
-                    "version":"4.4.6",
-                    "action":"uninstall",
-                    "status":"SUCCESSFUL"
+                    "name": "mongodb",
+                    "version": "4.4.6",
                 }
             ]
         }
@@ -263,7 +294,38 @@ Topic to publish to: `tedge/operations-status/software-update`
 }
 ```
 
-The `reason` and `details` fields are completely optional. The `details` field could even be dropped for initial release.
+Sending the current software list along with the status will help the cloud providers to show the most up-to-date software list after an update was performed, which would include any extra depepndencies that got installed/removed as part of the update.
+
+### Failed Status Payload
+
+```json
+{
+    "status":"FAILED",
+    "reason":"Partial failure: Couldn't install collectd and nginx",
+    "current-software-list": [
+        {
+            "type": "debian",
+            "list": [
+                {
+                    "name": "nodered",
+                    "version": "1.0.0",
+                }
+            ]
+        },
+        {
+            "type": "docker",
+            "list": [
+                {
+                    "name": "mongodb",
+                    "version": "4.4.6",
+                }
+            ]
+        }
+    ]
+}
+```
+
+Sending the current software list along with the status even in the case of a failure will help the cloud providers to show the most up-to-date software list, especially in the case of partial failures, which would contain the modules and dependencies that got installed, even though the overall update failed.
 
 # FAQs on design choices
 
