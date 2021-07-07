@@ -83,18 +83,15 @@ We need to declare all supported operations to c8y at once.
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant tedge
+    participant C8Y Mapper
     participant C8Y Cloud
 
-    User ->> tedge: tedge connect c8y
-    tedge -->> C8Y Cloud: SmartREST 114: Send c8y_SoftwareUpdate (or more) as SupportedOperations
+    C8Y Mapper ->> C8Y Cloud: SmartREST 114: Send c8y_SoftwareUpdate (or more) as SupportedOperations
 ```
 
 Note:
 - SmartREST `114` must contain all necessary supported operations. We can't send one by one.
 - `c8y_SoftwareUpdate` is supported in c8y version 10.7 and onwards.
-- `tedge connect c8y` is the good centerized and cloud-specific command. 
 
 Links and example message payloads:
 
