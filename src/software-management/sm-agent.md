@@ -104,9 +104,9 @@ Similar scheme can be used for other operations as well in future as captured in
 
 | Operation          | Request Topic                     | Response Topic                     |
 | ------------------ | --------------------------------- | ---------------------------------- |
-| Software List      | `tedge/inbound/software/list`     | `tedge/outbound/software/list`     |
+| Get Software List  | `tedge/inbound/software/list`     | `tedge/outbound/software/list`     |
 | Software Update    | `tedge/inbound/software/update`   | `tedge/outbound/software/update`   |
-| Software List Sync | `tedge/inbound/software/sync`     | `tedge/outbound/software/sync`     |
+| Sync Software List | `tedge/inbound/software/sync`     | `tedge/outbound/software/sync`     |
 | Update Profile     | `tedge/inbound/profile/update`    | `tedge/outbound/profile/update`    |
 | Get Configuration  | `tedge/inbound/configuration/get` | `tedge/outbound/configuration/get` |
 | Set Configuration  | `tedge/inbound/configuration/set` | `tedge/outbound/configuration/set` |
@@ -176,7 +176,9 @@ Payload format:
 In the top-level array, there will be one entry each for every plugin on the device, if the plugin reports a non-empty software list, when queried for one.
 
 * `id` is used to correlate any response from the mapper while processing the software list. If the mapper fails to process the list, the error will published 
-* `type` captures the type of software module that's being reported in the list, which is optional and can be empty for the default software module type of the device, if a default plugin is configured on the device.
+* `type` captures the type of software module that's being reported in the list.
+  It will be the name of the plugin that reports this list.
+  It can be optional and can be empty for the default software module type of the device, if a default plugin is configured on the device.
 * `list` is an array of software modules represented as JSON objects. This field is mandatory.
 * `name` in the software module JSON captures the name of the software module, which is mandatory.
 * `version` in the software module JSON captures the name of the software module, which is optional.
@@ -229,7 +231,7 @@ Payload format:
                 {
                     "name": "mongodb",
                     "version": "4.4.6",
-                    "action": "uninstall"
+                    "action": "remove"
                 }
             ]
         }
@@ -243,6 +245,8 @@ Currently we only support one software update operation at a time.
 If a duplicate operation is received while in the middle of processing another operation, the new request will be ignored.
 Ignorning is okay as that ignored operation will still be present in the PENDING requests queue and can be retrieved back after the current operation processing is complete.
 Since there's always only request that's under process, every reponse is assumed to be for the last request that was sent.
+
+We can add `id` field just like the one in the software list request payload, purely for correlation purposes.
 
 ## Thin Edge JSON Software Update Response
 
@@ -329,7 +333,14 @@ Sending the current software list along with the status even in the case of a fa
 
 # FAQs on design choices
 
-**Q:** Why have dedicated topics for each operation like `tedge/operations/software-update` and `tedge/operations-status/software-update`? Why not just use a single topic like `tedge/operations` and keep the operation type in the TEdge JSON payload in a `type` field or something like that?
+**Q:** Why have dedicated topics for each operation like `tedge/inbound/software/list`, `tedge/inbound/firmware/update` and `tedge/outbound/software/list`?
+Why not just use a single topic like `tedge/operations` and keep the operation type in the TEdge JSON payload in a `type` field or something like that?
 
-**A:** Having dedicated topics would be easier if different operations are handled by different Thin Edge components like `sm-agent` handling software update operations, a `fw-agent` handling firmware update operations etc. Each component can have dedicated request response topics and just deal with the request/responses for that component. Keeping a single topic with the operation `type` in the payload will force every component to read every operation message and filter only the ones that are meant for them. But, if we plan to have a single component process all the operations, having a single topic might be okay. But even in such a scenario, we could have dedicated topics like `tedge/operations/software-update` and `tedge/operations/firmware-update` and have that operations-agent subscribe to `tedge/operations/+` and derive the operation type from the last topic level.
+**A:** The `inbound` and `outbound` pairs are there for request-response handling.
+Even for different operations like software update, firmware update etc,
+having dedicated topics would be easier if different operations are handled by different Thin Edge components like `sm-agent` handling software update operations, a `fw-agent` handling firmware update operations etc.
+Each component can have dedicated request response topics and just deal with the request/responses for that component.
+Keeping a single topic with the operation `type` in the payload will force every component to read every operation message and filter only the ones that are meant for them.
+But, if we plan to have a single component process all the operations, having a single topic might be okay.
+But even in that case, we could have dedicated topics like `tedge/inbound/software/update` and `tedge/inbound/firmware/update` and have that operations-agent subscribe to `tedge/inbound/+` and derive the operation type from the last topic level.
 
