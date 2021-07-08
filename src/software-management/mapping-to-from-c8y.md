@@ -75,7 +75,7 @@ Since C8Y doesn't have `type` field, should we have to inform `type` to c8y? If 
 
 - [+] User can know which type of package.
 - [-] If user want to install a new version of package, we have to force user to name `<type>:<package>` in C8Y's software repository.
-- [-] It's duplicated efforts to <>.
+- [-] It forces duplicated work on user, along with Proposal in [How to tell that we want to install from the standard repository](#how-to-tell-that-we-want-to-install-from-the-standard-repository-eg-apt-install-collectd).
 
 ## Runtime
 
@@ -287,6 +287,7 @@ The first message is SmartREST `116`, that is `c8y_SoftwareList`.
 Refer to [From Thin Edge JSON Software List Responce to c8y_SoftwareList (116)](#from-thin-edge-json-software-list-response-to-c8y_softwarelist116-discussion-required).
 
 The second message is operation update to `FAILED` with the given reason.
+
 ```
 502,c8y_SoftwareUpdate,"Partial failure: Couldn't install collectd and nginx"
 ```
