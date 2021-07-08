@@ -8,4 +8,5 @@
 ## Software management
 - [Software management](software-management/README.md)
     - [Package Manager Plugin API](software-management/plugin-api.md)
-    - [Contract between Mapper and C8Y](software-management/contract-c8y-software-update.md)
+    - [Flow C8Y Mapper and C8Y Cloud](software-management/flow-mapper-c8y-software-update.md)
+    - [Mapping to/from C8Y](software-management/mapping-to-from-c8y.md)
