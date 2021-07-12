@@ -1,4 +1,4 @@
-# Contract between Mapper and C8Y Flow for 0.3
+# Contract between Mapper and C8Y Flow for Software Update
 
 *!!ATTENTION!! We support only `c8y_SoftwareUpdate` in the release `0.3`. Ignore `c8y_DeviceProfile` for now.*
 

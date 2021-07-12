@@ -74,8 +74,8 @@ Since C8Y doesn't have `type` field, should we have to inform `type` to c8y? If 
 ```
 
 - [+] User can know which type of package.
-- [-] If user want to install a new version of package, we have to force user to name `<type>:<package>` in C8Y's software repository.
-- [-] It forces duplicated work on user, along with Proposal in [How to tell that we want to install from the standard repository](#how-to-tell-that-we-want-to-install-from-the-standard-repository-eg-apt-install-collectd).
+- [-] If user want to install a new version of package, we have to force user to name `<software>:<type>` in C8Y's software repository.
+- [-] It forces duplicated work on user, along with Proposal in [How to know that we want to install from the standard repository](#how-to-know-that-we-want-to-install-from-the-standard-repository-eg-apt-install-collectd).
 
 ## Runtime
 
@@ -101,7 +101,7 @@ Incoming in: `c8y/s/ds`
 
 We need to make a decision here. There are two problems to think about.
 1. How can mapper know `type`?
-2. C8Y forces user to either upload binary to c8y or give a URL to the package. If user wants to install `collectd` from standard apt repository, what is the URL that should be given?
+2. If user wants to install `collectd` from standard apt repository, how to know it?
 
 #### How to determine the type?
 
@@ -112,33 +112,40 @@ It is aligned with proposal 1) in [Software List Response](#from-thin-edge-json-
 528,external_id,nodered,1.0.0,url1,install,collectd,5.7,url2,install,nginx,1.21.0,url3,install,mongodb,4.4.6,url4,delete
 ```
 
-Proposal 2: Enforce user to name software in the format `<type>:<software>`\
+Proposal 2: Enforce user to name software in the format `<software>:<type>`\
 It is aligned with proposal 2) in [Software List Response](#from-thin-edge-json-software-list-response-to-c8y_softwarelist116-discussion-required).
 
 ```
-528,external_id,debian:nodered,1.0.0,url1,install,debian:collectd,5.7,url2,install,docker:nginx,1.21.0,url3,install,docker:mongodb,4.4.6,url4,delete
+528,external_id,nodered:debian,1.0.0,url1,install,collectd:debian,5.7,url2,install,nginx:docker,1.21.0,url3,install,mongodb:docker,4.4.6,url4,delete
 ```
 
-#### How to tell that we want to install from the standard repository (e.g. apt install collectd)?
+#### How to know that we want to install from the standard repository (e.g. apt install collectd)?
 
-Enforce user to use `tedge://<type>` as URL. e.g. `tedge://debian`, `tedge://docker`...
+Proposal A: Enforce user to use `tedge://<type>` as URL. e.g. `tedge://debian`, `tedge://docker`...
 
 ```
-528,external_id,nodered,1.0.0,url1,install,collectd,5.7,url2,install,nginx,1.21.0,url3,install,mongodb,4.4.6,url4,delete
+528,external_id,nodered,1.0.0,tedge://debian,install,collectd,5.7,tedge://debian,install,nginx,1.21.0,tedge://docker,install,mongodb,4.4.6,tedge://docker,delete
+```
+
+Proposal B: "A non-valid formatted URL (or missing URL) is interpreted as "install from repo".
+that includes: entering " " (space) as URL.
+
+```
+528,external_id,nodered,1.0.0,,install,collectd,5.7,,install,nginx,1.21.0,,install,mongodb,4.4.6, ,delete
 ```
 
 #### Combination summary how SmartREST 528 looks
 
-Proposal 1:
+Proposal 1 & A:
 
 ```
 528,external_id,nodered,1.0.0,tedge://debian,install,collectd,5.7,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.deb,install,nginx,1.21.0,tedge://docker,install,mongodb,4.4.6,tedge://docker,delete
 ```
 
-Proposal 2:
+Proposal 2 & B:
 
 ```
-528,external_id,debian:nodered,1.0.0,tedge://debian,install,debian:collectd,5.7,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.deb,install,docker:nginx,1.21.0,tedge://docker,install,docker:mongodb,4.4.6,tedge://docker,delete
+528,external_id,nodered:debian,1.0.0, ,install,collectd:debian,5.7,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.deb,install,nginx:docker,1.21.0, ,install,mongodb:docker,4.4.6, ,delete
 ```
 
 Then, outgoing to: `tedge/inbound/software/update`
@@ -292,7 +299,7 @@ The second message is operation update to `FAILED` with the given reason.
 502,c8y_SoftwareUpdate,"Partial failure: Couldn't install collectd and nginx"
 ```
 
-## From Thin Edge JSON device capabilities to c8y_SupportedOpeations(114) [Under the discussion]
+## From Thin Edge JSON device capabilities to c8y_SupportedOperations(114) [Under the discussion]
 
 Incoming to `where?`
 
