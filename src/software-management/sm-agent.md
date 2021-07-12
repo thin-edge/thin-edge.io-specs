@@ -10,11 +10,23 @@ sequenceDiagram
     alt If SoftwareUpdateOperation in-progress flag found in persistence store
         SM Agent->>Cloud Mapper: SoftwareUpdateOperation FAILED
     end
+
+    SM Agent->>Cloud Mapper: Get all PENDING operations
+    alt If any SoftwareUpdateOperation is PENDING
+        Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
+    end
+
 ```
 
-On every startup, sm-agent checks if a `SoftwareUpdateOperation` was in progress before the startup, from its persistent store. If yes, it means that the sm-agent crashed or the device got restarted while the update operation was in-progress. As long as we don't support resumption of software update operations, it's better to just mark the last operation failed so that the users can retry.
+On every startup, sm-agent checks if a `SoftwareUpdateOperation` was in progress before the startup, from its persistent store.
+If yes, it means that the sm-agent crashed or the device got restarted while the update operation was in-progress.
+As long as we don't support resumption of software update operations, it's better to just mark the last operation failed so that the users can retry.
 
-For now, persisting just a flag that the `SoftwareUpdateOperation` is in-progress is sufficient. Once we start supporting software update resumption after crashes/restarts, the entire software update list itself will have to be persisted and updated as the operation is being processed.
+For now, persisting just a flag that the `SoftwareUpdateOperation` is in-progress is sufficient.
+Once we start supporting software update resumption after crashes/restarts, the entire software update list itself will have to be persisted and updated as the operation is being processed.
+
+On startup, the agent also prompts the mapper to send any PENDING operation that it may have received while the agent was not up.
+The mapper will respond back with a `SoftwareUpdateOperation` if any were received and PENDING.
 
 # SM Agent Runtime
 
@@ -45,7 +57,6 @@ sequenceDiagram
     participant SM Agent
     participant Cloud Mapper
 
-    SM Agent->>Cloud Mapper: Get PENDING SoftwareUpdateOperation
     Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
 
     SM Agent->>SM Agent: Persist SoftwareUpdateOperation in-progress
@@ -112,6 +123,17 @@ Similar scheme can be used for other operations as well in future as captured in
 | Set Configuration  | `tedge/inbound/configuration/set` | `tedge/outbound/configuration/set` |
 | Get Log            | `tedge/inbound/log/get`           | `tedge/outbound/log/get`           |
 | Restart  device    | `tedge/inbound/device/restart`    | `tedge/outbound/device/restart`    |
+
+# Get PENDING Operations
+
+Topic to publish the request to: `tedge/inbound/pending`
+
+There's no payload to send.
+
+This request is not a specific one to retrive only the PENDING `SoftwareUpdateOperation`s,
+but rather a prompt to the mapper to send all the PENDING requests to their appropriate `inboud/#` topics.
+The mapper, on receipt of this request will publish any PENDING operations to the designated topics like `tedge/inbound/software/list`, `tedge/inbound/configuration/set` etc based on which all operations are PENDING.
+If there are no PENDING operations, the mapper won't send any response.
 
 # Software List Operation
 
