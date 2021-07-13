@@ -1,19 +1,32 @@
+# Software Management Agent
+
+The software management agent (referred to as `SM Agent` in the rest of this document) is the component that's responsible for the software management operations on a Thin Edge device.
+It primarily interacts with a `Cloud Agent` and a `Software Plugin`.
+
+The `Cloud Agent` is the process that's responsible for cloud message mapping as well as other cloud-specific processing logic.
+The `Cloud Agent`'s behaviour handling of software management requests/response are describe in detail here[../c8y-mapper-operation-handling.md]
+
+The `Software Plugin` handles the installation/removal of software modules with the help of package manager, when called by the `SM Agent`.
+The `Software Plugin` specification is captured in detail here[../plugin-api.md]
 # SM Agent Startup
 
 The sequence of operations and message exchanges happening on every startup of the sm-agent (initial startup on `tedge connect`, service restart, device restarts etc).
+
+
 
 ```mermaid
 sequenceDiagram
     participant Software Plugin
     participant SM Agent
-    participant Cloud Mapper
+    participant Cloud Agent
     alt If SoftwareUpdateOperation in-progress flag found in persistence store
-        SM Agent->>Cloud Mapper: SoftwareUpdateOperation FAILED
+        SM Agent->>Cloud Agent: SoftwareUpdateOperation FAILED
+        SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
     end
 
-    SM Agent->>Cloud Mapper: Get all PENDING operations
+    SM Agent->>Cloud Agent: Get all PENDING operations
     alt If any SoftwareUpdateOperation is PENDING
-        Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
+        Cloud Agent-->>SM Agent: SoftwareUpdateOperation
     end
 
 ```
@@ -38,13 +51,13 @@ The sequence of operations on the receipt of a software list request is as follo
 sequenceDiagram
     participant Software Plugin
     participant SM Agent
-    participant Cloud Mapper
-    Cloud Mapper-->>SM Agent: SoftwareListRequest
+    participant Cloud Agent
+    Cloud Agent-->>SM Agent: SoftwareListRequest
     loop Each Plugin
         SM Agent->>Software Plugin: plugin-cmd list
         Software Plugin-->>SM Agent: list cmd output
     end
-    SM Agent->>Cloud Mapper: SoftwareListResponse
+    SM Agent->>Cloud Agent: SoftwareListResponse
 ```
 
 
@@ -55,12 +68,12 @@ The sequence of operations on the receipt of a software update request is as fol
 sequenceDiagram
     participant Software Plugin
     participant SM Agent
-    participant Cloud Mapper
+    participant Cloud Agent
 
-    Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
+    Cloud Agent-->>SM Agent: SoftwareUpdateOperation
 
     SM Agent->>SM Agent: Persist SoftwareUpdateOperation in-progress
-    SM Agent->>Cloud Mapper: SoftwareUpdateOperation EXECUTING
+    SM Agent->>Cloud Agent: SoftwareUpdateOperation EXECUTING
     loop Each plugin
         SM Agent->>Software Plugin: plugin-cmd prepare
 
@@ -81,12 +94,12 @@ sequenceDiagram
         SM Agent->>Software Plugin: plugin-cmd list
         Software Plugin-->>SM Agent: list cmd output
     end
-    SM Agent->>Cloud Mapper: SoftwareList
+    SM Agent->>Cloud Agent: SoftwareList
 
     alt If SoftwareUpdateOperation successful and SoftwareListStatus successful
-        SM Agent->>Cloud Mapper: SoftwareUpdateOperation SUCCESSFUL
+        SM Agent->>Cloud Agent: SoftwareUpdateOperation SUCCESSFUL
     else
-        SM Agent->>Cloud Mapper: SoftwareUpdateOperation FAILED
+        SM Agent->>Cloud Agent: SoftwareUpdateOperation FAILED
     end
 
     SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
@@ -105,42 +118,56 @@ before installing the ones to be installed as that offers a more predictable beh
 While installing/uinstalling the modules one by one, we have the option to either fail-fast as soon as one installation/uninstallation fails or keep track of the failures and continue installing/uninstalling the rest of the software modules.
 Fail-fast would be a better choice as in the case of a failure, the user is more likely to retry that operation after making any changes to the original software update list that he prepared.
 
-# Thin Edge JSON topic structures
+# Thin Edge JSON Specification for Commands
 
-A topic scheme like `tedge/inbound/<component>/<action>` is used for any inbound operation requests from the device to the cloud.
-For the corresponding operation response need to be sent to `tedge/outbound/<component>/<action>`.
+A topic scheme like `tedge/commands/<component>/<action>/req` is used for inbound operation requests.
+The corresponding operation response need to be sent to `tedge/commands/<component>/<action>/res`.
 
-For example, the request to fetch the software list from the agent needs to be sent to `tedge/inbound/software/list` and the corresponding software list response will be sent to `tedge/outbound/software/list`.
+For example, the request to fetch the software list from the agent needs to be sent to `tedge/commands/software/list/req` and the corresponding software list response will be sent to `tedge/commands/software/list/res`.
 Similar scheme can be used for other operations as well in future as captured in the following table:
 
-| Operation          | Request Topic                     | Response Topic                     |
-| ------------------ | --------------------------------- | ---------------------------------- |
-| Get Software List  | `tedge/inbound/software/list`     | `tedge/outbound/software/list`     |
-| Software Update    | `tedge/inbound/software/update`   | `tedge/outbound/software/update`   |
-| Sync Software List | `tedge/inbound/software/sync`     | `tedge/outbound/software/sync`     |
-| Update Profile     | `tedge/inbound/profile/update`    | `tedge/outbound/profile/update`    |
-| Get Configuration  | `tedge/inbound/configuration/get` | `tedge/outbound/configuration/get` |
-| Set Configuration  | `tedge/inbound/configuration/set` | `tedge/outbound/configuration/set` |
-| Get Log            | `tedge/inbound/log/get`           | `tedge/outbound/log/get`           |
-| Restart  device    | `tedge/inbound/device/restart`    | `tedge/outbound/device/restart`    |
+| Operation          | Request Topic                          | Response Topic                         |
+| ------------------ | -------------------------------------- | -------------------------------------- |
+| Get Software List  | `tedge/commands/software/list/req`     | `tedge/commands/software/list/res`     |
+| Software Update    | `tedge/commands/software/update/req`   | `tedge/commands/software/update/res`   |
+| Sync Software List | `tedge/commands/software/sync/req`     | `tedge/commands/software/sync/res`     |
+| Apply Profile      | `tedge/commands/profile/apply/req`     | `tedge/commands/profile/apply/res`     |
+| Get Configuration  | `tedge/commands/configuration/get/req` | `tedge/commands/configuration/get/res` |
+| Set Configuration  | `tedge/commands/configuration/set/req` | `tedge/commands/configuration/set/res` |
+| Get Log            | `tedge/commands/log/get/req`           | `tedge/commands/log/get/res`           |
+| Restart  device    | `tedge/commands/control/restart/req`   | `tedge/commands/control/restart/res`   |
+| Remote  connect    | `tedge/commands/control/connect/req`   | `tedge/commands/control/connect/res`   |
 
-# Get PENDING Operations
+Having such dedicated topics for each command enables Thin Edge components to selectively subscribe to only the commands that they're interested in.
+If one component wants to subscribe to all commands for a single component like `software`, it can still subscribe to `tedge/commands/<component>/+/req`.
+If one component wants to subscribe to all commands, then it can even subscribe to `tedge/commands/+/+/req`.
 
-Topic to publish the request to: `tedge/inbound/pending`
+## Ordering of operations along multiple topics
+
+Since MQTT doesn't guarantee ordered delivery of messages across different topics, the ordering of actions for a single component,
+or even the ordering of actions between different components will have to be controlled by the publisher, which is the `Cloud Agent`.
+When strict ordering is required between commands, like a software update command followed by a device restart command,
+the `Cloud Agent` needs to issue the software update request first and wait for its response and only then issue the device restart request.
+It can also send unordered commands like a log request or remote control parallelly, even when some other ordered commands are being executed.
+
+# Thin Edge JSON Specification for Software Management Commands
+## Get PENDING Operations
+
+Topic to publish the request to: `tedge/commands/pending/req`
 
 There's no payload to send.
 
 This request is not a specific one to retrive only the PENDING `SoftwareUpdateOperation`s,
 but rather a prompt to the mapper to send all the PENDING requests to their appropriate `inboud/#` topics.
-The mapper, on receipt of this request will publish any PENDING operations to the designated topics like `tedge/inbound/software/list`, `tedge/inbound/configuration/set` etc based on which all operations are PENDING.
+The mapper, on receipt of this request will publish any PENDING operations to the designated topics like `tedge/commands/software/list/req`, `tedge/commands/configuration/set/req` etc based on which all operations are PENDING.
 If there are no PENDING operations, the mapper won't send any response.
 
-# Software List Operation
+## Software List Operation
 
-## Thin Edge JSON Software List Request
+### Thin Edge JSON Software List Request
 
 
-Topic to publish the software list request to: `tedge/inbound/software/list`
+Topic to publish the software list request to: `tedge/commands/software/list`
 
 Request payload: 
 
@@ -152,7 +179,7 @@ Request payload:
 
 Some unique id must be generated by the requestor and this `id` is sent back in the response for correlation.
 
-## Thin Edge JSON Software List Response
+### Thin Edge JSON Software List Response
 
 Topic to subscribe for the software list response: `tedge/outbound/software/list`
 
@@ -215,16 +242,17 @@ If fetching the software list had failed, the reponse would have indicated a fai
 }
 ```
 
-# Software Update Operation
+## Software Update Operation
 
-## Thin Edge JSON Software Update Request
+### Thin Edge JSON Software Update Request
 
-Topic to subscribe to: `tedge/inbound/software/update`
+Topic to subscribe to: `tedge/commands/software/update`
 
 Payload format:
 
 ```json
 {
+    "id": 123,
     "software-update": [
         {
             "type": "debian",
@@ -261,22 +289,13 @@ Payload format:
 }
 ```
 
-**Why there's no `id` in the request to distinguish one SW update request from another?**
-  
-Currently we only support one software update operation at a time.
-If a duplicate operation is received while in the middle of processing another operation, the new request will be ignored.
-Ignorning is okay as that ignored operation will still be present in the PENDING requests queue and can be retrieved back after the current operation processing is complete.
-Since there's always only request that's under process, every reponse is assumed to be for the last request that was sent.
-
-We can add `id` field just like the one in the software list request payload, purely for correlation purposes.
-
-## Thin Edge JSON Software Update Response
+### Thin Edge JSON Software Update Response
 
 Once a software-update operation is received, it must be acknowledged with an EXECUTING response, followed by a SUCCESSFUL or FAILED response.
 
-Topic to subscribe for the software update response: `tedge/outbound/software/update`
+Topic to subscribe for the software update response: `tedge/commands/software/update/res`
 
-### Executing Status Payload
+#### Executing Status Payload
 
 ```json
 {
@@ -284,7 +303,7 @@ Topic to subscribe for the software update response: `tedge/outbound/software/up
 }
 ```
 
-### Successful Status Payload
+#### Successful Status Payload
 
 ```json
 {
@@ -322,7 +341,7 @@ Topic to subscribe for the software update response: `tedge/outbound/software/up
 
 Sending the current software list along with the status will help the cloud providers to show the most up-to-date software list after an update was performed, which would include any extra depepndencies that got installed/removed as part of the update.
 
-### Failed Status Payload
+#### Failed Status Payload
 
 ```json
 {
@@ -352,17 +371,3 @@ Sending the current software list along with the status will help the cloud prov
 ```
 
 Sending the current software list along with the status even in the case of a failure will help the cloud providers to show the most up-to-date software list, especially in the case of partial failures, which would contain the modules and dependencies that got installed, even though the overall update failed.
-
-# FAQs on design choices
-
-**Q:** Why have dedicated topics for each operation like `tedge/inbound/software/list`, `tedge/inbound/firmware/update` and `tedge/outbound/software/list`?
-Why not just use a single topic like `tedge/operations` and keep the operation type in the TEdge JSON payload in a `type` field or something like that?
-
-**A:** The `inbound` and `outbound` pairs are there for request-response handling.
-Even for different operations like software update, firmware update etc,
-having dedicated topics would be easier if different operations are handled by different Thin Edge components like `sm-agent` handling software update operations, a `fw-agent` handling firmware update operations etc.
-Each component can have dedicated request response topics and just deal with the request/responses for that component.
-Keeping a single topic with the operation `type` in the payload will force every component to read every operation message and filter only the ones that are meant for them.
-But, if we plan to have a single component process all the operations, having a single topic might be okay.
-But even in that case, we could have dedicated topics like `tedge/inbound/software/update` and `tedge/inbound/firmware/update` and have that operations-agent subscribe to `tedge/inbound/+` and derive the operation type from the last topic level.
-
