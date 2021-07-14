@@ -1,10 +1,10 @@
 # Software Management Agent
 
 The software management agent (referred to as `SM Agent` in the rest of this document) is the component that's responsible for the software management operations on a Thin Edge device.
-It primarily interacts with a `Cloud Agent` and a `Software Plugin`.
+It primarily interacts with a `Cloud Mapper` and a `Software Plugin` backed by a software package manager (apt, snap, docker etc).
 
-The `Cloud Agent` is the process that's responsible for cloud message mapping as well as other cloud-specific processing logic.
-The `Cloud Agent`'s behaviour handling of software management requests/response are describe in detail here[../c8y-mapper-operation-handling.md]
+The `Cloud Mapper` is the process that's responsible for cloud message mapping as well as other cloud-specific processing logic.
+The `Cloud Mapper`'s behaviour handling of software management requests/response are describe in detail here[../c8y-mapper-operation-handling.md]
 
 The `Software Plugin` handles the installation/removal of software modules with the help of package manager, when called by the `SM Agent`.
 The `Software Plugin` specification is captured in detail here[../plugin-api.md]
@@ -18,15 +18,15 @@ The sequence of operations and message exchanges happening on every startup of t
 sequenceDiagram
     participant Software Plugin
     participant SM Agent
-    participant Cloud Agent
+    participant Cloud Mapper
     alt If SoftwareUpdateOperation in-progress flag found in persistence store
-        SM Agent->>Cloud Agent: SoftwareUpdateOperation FAILED
+        SM Agent->>Cloud Mapper: SoftwareUpdateOperation FAILED
         SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
     end
 
-    SM Agent->>Cloud Agent: Get all PENDING operations
+    SM Agent->>Cloud Mapper: Declare SoftwareList+SoftwareUpdate capabilities
     alt If any SoftwareUpdateOperation is PENDING
-        Cloud Agent-->>SM Agent: SoftwareUpdateOperation
+        Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
     end
 
 ```
@@ -51,13 +51,13 @@ The sequence of operations on the receipt of a software list request is as follo
 sequenceDiagram
     participant Software Plugin
     participant SM Agent
-    participant Cloud Agent
-    Cloud Agent-->>SM Agent: SoftwareListRequest
+    participant Cloud Mapper
+    Cloud Mapper-->>SM Agent: SoftwareListRequest
     loop Each Plugin
         SM Agent->>Software Plugin: plugin-cmd list
         Software Plugin-->>SM Agent: list cmd output
     end
-    SM Agent->>Cloud Agent: SoftwareListResponse
+    SM Agent->>Cloud Mapper: SoftwareListResponse
 ```
 
 
@@ -68,41 +68,46 @@ The sequence of operations on the receipt of a software update request is as fol
 sequenceDiagram
     participant Software Plugin
     participant SM Agent
-    participant Cloud Agent
+    participant Cloud Mapper
 
-    Cloud Agent-->>SM Agent: SoftwareUpdateOperation
+    loop if a SoftwareUpdateOperation is PENDING
+        Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
 
-    SM Agent->>SM Agent: Persist SoftwareUpdateOperation in-progress
-    SM Agent->>Cloud Agent: SoftwareUpdateOperation EXECUTING
-    loop Each plugin
-        SM Agent->>Software Plugin: plugin-cmd prepare
+        SM Agent->>SM Agent: Persist SoftwareUpdateOperation in-progress
+        SM Agent->>Cloud Mapper: SoftwareUpdateOperation EXECUTING
 
-        loop Each software module to be uninstalled
-            SM Agent->>Software Plugin: plugin-cmd uninstall module
+        loop Each plugin
+            SM Agent->>Software Plugin: plugin-cmd prepare
             Software Plugin-->>SM Agent: Exit code + stdout/stderr
         end
 
-        loop Each software module to be installed
-            SM Agent->>Software Plugin: plugin-cmd install module
+        loop Each module in SoftwareUpdateOperation module list
+            alt If module action is install
+                SM Agent->>Software Plugin: plugin-cmd install module
+            else
+                SM Agent->>Software Plugin: plugin-cmd uninstall module
+            end
             Software Plugin-->>SM Agent: Exit code + stdout/stderr
         end
 
-        SM Agent->>Software Plugin: plugin-cmd finalize
-    end
+        loop Each plugin
+            SM Agent->>Software Plugin: plugin-cmd finalize
+            Software Plugin-->>SM Agent: Exit code + stdout/stderr
 
-    loop Each plugin
-        SM Agent->>Software Plugin: plugin-cmd list
-        Software Plugin-->>SM Agent: list cmd output
-    end
-    SM Agent->>Cloud Agent: SoftwareList
+            SM Agent->>Software Plugin: plugin-cmd list
+            Software Plugin-->>SM Agent: list cmd output
+        end
 
-    alt If SoftwareUpdateOperation successful and SoftwareListStatus successful
-        SM Agent->>Cloud Agent: SoftwareUpdateOperation SUCCESSFUL
-    else
-        SM Agent->>Cloud Agent: SoftwareUpdateOperation FAILED
-    end
+        SM Agent->>Cloud Mapper: SoftwareList
 
-    SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
+        alt If SoftwareUpdateOperation successful and SoftwareListStatus successful
+            SM Agent->>Cloud Mapper: SoftwareUpdateOperation SUCCESSFUL
+        else
+            SM Agent->>Cloud Mapper: SoftwareUpdateOperation FAILED
+        end
+
+        SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
+    end
 ```
 
 The SM Agent will process only one `SoftwareUpdateOperation` at a time.
@@ -111,63 +116,67 @@ Ignorning is okay as the SM Agent expects to retrieve it later on, after the cur
 The mapper can choose to persist such PENDING requests on its own if the cloud that it supports doesn't support such queueing.
 But, the SM Agent won't persist such requests.
 
-
-While processing the software update list, all the packages to be uninstalled are processed first,
-before installing the ones to be installed as that offers a more predictable behaviour.
+While processing the software update list, the module are installed/uninstalled in the order that they were received from the cloud.
 
 While installing/uinstalling the modules one by one, we have the option to either fail-fast as soon as one installation/uninstallation fails or keep track of the failures and continue installing/uninstalling the rest of the software modules.
 Fail-fast would be a better choice as in the case of a failure, the user is more likely to retry that operation after making any changes to the original software update list that he prepared.
 
+Once the mapper receives the SUCCESSFUL or FAILED status for an update operation from the SM Agent,
+it can send the next PENDING `SoftwareUpdateOperation` to the SM Agent and the whole request processing cycle will repeat.
+
 # Thin Edge JSON Specification for Commands
 
-A topic scheme like `tedge/commands/<component>/<action>/req` is used for inbound operation requests.
-The corresponding operation response need to be sent to `tedge/commands/<component>/<action>/res`.
+A topic scheme like `tedge/commands/req/<component>/<action>/req` is used for inbound operation requests.
+The corresponding operation response need to be sent to `tedge/commands/res/<component>/<action>/res`.
 
-For example, the request to fetch the software list from the agent needs to be sent to `tedge/commands/software/list/req` and the corresponding software list response will be sent to `tedge/commands/software/list/res`.
+For example, the request to fetch the software list from the agent needs to be sent to `tedge/commands/req/software/list/req` and the corresponding software list response will be sent to `tedge/commands/res/software/list/res`.
 Similar scheme can be used for other operations as well in future as captured in the following table:
 
-| Operation          | Request Topic                          | Response Topic                         |
-| ------------------ | -------------------------------------- | -------------------------------------- |
-| Get Software List  | `tedge/commands/software/list/req`     | `tedge/commands/software/list/res`     |
-| Software Update    | `tedge/commands/software/update/req`   | `tedge/commands/software/update/res`   |
-| Sync Software List | `tedge/commands/software/sync/req`     | `tedge/commands/software/sync/res`     |
-| Apply Profile      | `tedge/commands/profile/apply/req`     | `tedge/commands/profile/apply/res`     |
-| Get Configuration  | `tedge/commands/configuration/get/req` | `tedge/commands/configuration/get/res` |
-| Set Configuration  | `tedge/commands/configuration/set/req` | `tedge/commands/configuration/set/res` |
-| Get Log            | `tedge/commands/log/get/req`           | `tedge/commands/log/get/res`           |
-| Restart  device    | `tedge/commands/control/restart/req`   | `tedge/commands/control/restart/res`   |
-| Remote  connect    | `tedge/commands/control/connect/req`   | `tedge/commands/control/connect/res`   |
+| Operation          | Request Topic                              | Response Topic                         |
+| ------------------ | ------------------------------------------ | -------------------------------------- |
+| Get Software List  | `tedge/commands/req/software/list`         | `tedge/commands/res/software/list`     |
+| Software Update    | `tedge/commands/req/software/update`       | `tedge/commands/res/software/update`   |
+| Sync Software List | `tedge/commands/req/software/sync`         | `tedge/commands/res/software/sync`     |
+| Apply Profile      | `tedge/commands/req/profile/apply`         | `tedge/commands/res/profile/apply`     |
+| Apply Profile      | `tedge/commands/req/profile/pending`       | `tedge/commands/res/profile/apply`     |
+| Get Configuration  | `tedge/commands/req/configuration/get`     | `tedge/commands/res/configuration/get` |
+| Set Configuration  | `tedge/commands/req/configuration/set`     | `tedge/commands/res/configuration/set` |
+| Set Configuration  | `tedge/commands/req/configuration/pending` | `tedge/commands/res/configuration/set` |
+| Get Log            | `tedge/commands/req/log/get`               | `tedge/commands/res/log/get`           |
+| Restart  device    | `tedge/commands/req/control/restart`       | `tedge/commands/res/control/restart`   |
+| Remote  connect    | `tedge/commands/req/control/connect`       | `tedge/commands/res/control/connect`   |
 
 Having such dedicated topics for each command enables Thin Edge components to selectively subscribe to only the commands that they're interested in.
-If one component wants to subscribe to all commands for a single component like `software`, it can still subscribe to `tedge/commands/<component>/+/req`.
-If one component wants to subscribe to all commands, then it can even subscribe to `tedge/commands/+/+/req`.
+If one component wants to subscribe to all commands for a single component like `software`, it can still subscribe to `tedge/commands/req/software/#`.
+If one component wants to subscribe to all commands, then it can even subscribe to `tedge/commands/req/#`.
 
 ## Ordering of operations along multiple topics
 
 Since MQTT doesn't guarantee ordered delivery of messages across different topics, the ordering of actions for a single component,
-or even the ordering of actions between different components will have to be controlled by the publisher, which is the `Cloud Agent`.
+or even the ordering of actions between different components will have to be controlled by the publisher, which is the `Cloud Mapper`.
 When strict ordering is required between commands, like a software update command followed by a device restart command,
-the `Cloud Agent` needs to issue the software update request first and wait for its response and only then issue the device restart request.
+the `Cloud Mapper` needs to issue the software update request first, wait for its response and only then issue the device restart request.
 It can also send unordered commands like a log request or remote control parallelly, even when some other ordered commands are being executed.
 
 # Thin Edge JSON Specification for Software Management Commands
-## Get PENDING Operations
+## Declaring Capabilities
 
-Topic to publish the request to: `tedge/commands/pending/req`
+Topics to publish the request to:
+* For software update: `tedge/capabilities/software/update`
+* For software list: `tedge/capabilities/software/list`
+* For software sync: `tedge/capabilities/software/sync`
 
 There's no payload to send.
 
-This request is not a specific one to retrive only the PENDING `SoftwareUpdateOperation`s,
-but rather a prompt to the mapper to send all the PENDING requests to their appropriate `inboud/#` topics.
-The mapper, on receipt of this request will publish any PENDING operations to the designated topics like `tedge/commands/software/list/req`, `tedge/commands/configuration/set/req` etc based on which all operations are PENDING.
-If there are no PENDING operations, the mapper won't send any response.
+The mapper, on receipt of this request will publish any PENDING operations of that kind to the designated topics like `tedge/commands/req/software/list/req`, `tedge/commands/req/configuration/set/req` etc.
+If there are no PENDING operations of that kind, then mapper won't send any response.
 
 ## Software List Operation
 
 ### Thin Edge JSON Software List Request
 
 
-Topic to publish the software list request to: `tedge/commands/software/list`
+Topic to publish the software list request to: `tedge/commands/req/software/list`
 
 Request payload: 
 
@@ -246,7 +255,7 @@ If fetching the software list had failed, the reponse would have indicated a fai
 
 ### Thin Edge JSON Software Update Request
 
-Topic to subscribe to: `tedge/commands/software/update`
+Topic to subscribe to: `tedge/commands/req/software/update`
 
 Payload format:
 
@@ -293,7 +302,7 @@ Payload format:
 
 Once a software-update operation is received, it must be acknowledged with an EXECUTING response, followed by a SUCCESSFUL or FAILED response.
 
-Topic to subscribe for the software update response: `tedge/commands/software/update/res`
+Topic to subscribe for the software update response: `tedge/commands/res/software/update`
 
 #### Executing Status Payload
 
@@ -361,8 +370,32 @@ Sending the current software list along with the status will help the cloud prov
             "type": "docker",
             "list": [
                 {
+                    "name": "nginx",
+                    "version": "1.21.0",
+                }
+            ]
+        }
+    ],
+    "failures":[
+        {
+            "type":"debian",
+            "list": [
+                {
+                    "name":"collectd",
+                    "version":"5.7",
+                    "action":"install",
+                    "reason":"Network timeout"
+                }
+            ]
+        },
+        {
+            "type":"docker",
+            "list": [
+                {
                     "name": "mongodb",
                     "version": "4.4.6",
+                    "action":"remove",
+                    "reason":"Other components dependent on it"
                 }
             ]
         }
@@ -370,4 +403,6 @@ Sending the current software list along with the status will help the cloud prov
 }
 ```
 
-Sending the current software list along with the status even in the case of a failure will help the cloud providers to show the most up-to-date software list, especially in the case of partial failures, which would contain the modules and dependencies that got installed, even though the overall update failed.
+Sending the `current-software-list` along with the status even in the case of a failure will help the cloud providers to show the most up-to-date software list, especially in the case of partial failures, which would contain the modules and dependencies that got installed, even though the overall update failed.
+
+The `failures` fragment captures the modules that could not be installed/uninstalled with the reason reported by the software plugin.
