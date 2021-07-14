@@ -129,10 +129,12 @@ it can send the next PENDING `SoftwareUpdateOperation` to the SM Agent and the w
 
 # Thin Edge JSON Specification for Commands
 
-A topic scheme like `tedge/commands/req/<component>/<action>/req` is used for inbound operation requests.
-The corresponding operation response need to be sent to `tedge/commands/res/<component>/<action>/res`.
+A topic scheme like `tedge/commands/req/<component>/<action>` is used for inbound operation requests.
+The corresponding operation response need to be sent to `tedge/commands/res/<component>/<action>`.
+In the future we can add sub actions as well, as in `tedge/commands/req/<component>/<action>/<sub-action>` 
+or even more levels in the topic hierarchy, if needed.
 
-For example, the request to fetch the software list from the agent needs to be sent to `tedge/commands/req/software/list/req` and the corresponding software list response will be sent to `tedge/commands/res/software/list/res`.
+For example, the request to fetch the software list from the agent needs to be sent to `tedge/commands/req/software/list` and the corresponding software list response will be sent to `tedge/commands/res/software/list`.
 Similar scheme can be used for other operations as well in future as captured in the following table:
 
 | Operation          | Request Topic                          | Response Topic                         |
