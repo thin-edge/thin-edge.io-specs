@@ -24,7 +24,10 @@ sequenceDiagram
         SM Agent-->>SM Agent: Clear SoftwareUpdateOperation in-progress flag from persistence store
     end
 
-    SM Agent->>Cloud Mapper: Declare SoftwareList+SoftwareUpdate capabilities
+    alt If any software plugins available on the device
+        SM Agent->>Cloud Mapper: Declare SoftwareList+SoftwareUpdate capabilities
+    end
+
     alt If any SoftwareUpdateOperation is PENDING
         Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
     end
