@@ -1,10 +1,10 @@
 # Mapping to/from C8Y
 
-## At Mapper Start-Up
+## C8Y Mapper Startup
 
 ### Send Thin Edge JSON Software List Request
 
-Outgoing to `tedge/inbound/software/list`.
+Outgoing on the topic `tedge/commands/req/software/list` to SM Agent.
 
 ```json
 {
@@ -14,9 +14,9 @@ Outgoing to `tedge/inbound/software/list`.
 
 The mapper must generate a unique ID. Refer to <Link to Albin's doc later>.
 
-### From Thin Edge JSON Software List Response to c8y_SoftwareList(116) [Discussion required]
+### Translate from Thin Edge JSON Software List Response to SmartREST c8y_SoftwareList (116) 
 
-Incoming to `tedge/outbound/software/list`.
+The Thin Edge JSON message comes on the topic `tedge/commands/res/software/list` from SM Agent.
 
 ```json
 {
@@ -53,109 +53,157 @@ Incoming to `tedge/outbound/software/list`.
 }
 ```
 
-Outgoing to `c8y/s/us`.
+The mapper has to translate the Thin Edge JSON message to SmartREST (116). 
 
-We need to make a design decision here.\
-Since C8Y doesn't have `type` field, should we have to inform `type` to c8y? If yes, how?
+We set rules how to represent `type` in C8Y Cloud
+since C8Y doesn't have `type` field in `c8y_SoftwareList` structure.
+- The mapper adds `type` as a suffix of a package **version** after `:`.
+  - Example: if the package type is `debian`, and the version is `1.0.0`,
+    the version that mapper reports is `1.0.0:debian`.
+- Keep URL fields blank.
 
-1) Ignore `type` completely
-
-```
-116,nodered,1.0.0,,collectd,5.7,,nginx,1.21.0,,mongodb,4.4.6,
-```
-
-- [+] Easy way to go. We can say that it's a design problem of C8Y Cloud.
-- [--] User can't know which type of `nginx` for example. Can it be debian, snap, or docker...
-
-2) Add `type` as a suffix of package name
+The SmartREST(116) message goes out on the topic `c8y/s/us` to Mosquitto bridge.
 
 ```
-116,nodered:debian,1.0.0,,collectd:debian,5.7,,nginx:docker,1.21.0,,mongodb:docker,4.4.6,
+116,nodered,1.0.0:debian,,collectd,5.7:debian,,nginx,1.21.0:docker,,mongodb,4.4.6:docker,
 ```
 
-- [+] User can know which type of package.
-- [-] If user want to install a new version of package, we have to force user to name `<software>:<type>` in C8Y's software repository.
-- [-] It forces duplicated work on user, along with Proposal in [How to know that we want to install from the standard repository](#how-to-know-that-we-want-to-install-from-the-standard-repository-eg-apt-install-collectd).
+## SM Agent Startup
 
-## Runtime
+### Translate from Thin Edge JSON SoftwareUpdateOperation FAILED to SmartREST Operation Update FAILED (502) and Software List (116)
 
-### From Thin Edge JSON Get PENDING SoftwareUpdate operations Request to GET PENDING operations (500)
-
-Incoming in: `where?`
+The Thin Edge JSON message comes on the topic `tedge/commands/res/software/update` from SM Agent.
 
 ```json
 {
-    "unknown": "no spec yet available"
+    "status":"FAILED",
+    "reason":"Partial failure: Couldn't install collectd and nginx",
+    "currentSoftwareList": [
+        {
+            "type": "debian",
+            "modules": [
+                {
+                    "name": "nodered",
+                    "version": "1.0.0"
+                }
+            ]
+        },
+        {
+            "type": "docker",
+            "modules": [
+                {
+                    "name": "nginx",
+                    "version": "1.21.0"
+                }
+            ]
+        }
+    ],
+    "failures":[
+        {
+            "type":"debian",
+            "modules": [
+                {
+                    "name":"collectd",
+                    "version":"5.7",
+                    "action":"install",
+                    "reason":"Network timeout"
+                }
+            ]
+        },
+        {
+            "type":"docker",
+            "modules": [
+                {
+                    "name": "mongodb",
+                    "version": "4.4.6",
+                    "action":"remove",
+                    "reason":"Other components dependent on it"
+                }
+            ]
+        }
+    ]
 }
 ```
 
-Outgoing to: `c8y/s/us`
+The mapper translates the Thin Edge JSON to SmartREST `502` and `116` then publishes them to `c8y/s/us`.
+
+Rules:
+- Use the only parent field `reason` as a failure reason to report.
+- Get current software list from the field `currentSoftwareList`, and translate it with [the rules](#translate-from-thin-edge-json-software-list-response-to-smartrest-c8y_softwarelist-116).
+
+Status update:
+
+```
+502,c8y_SoftwareUpdate,"Partial failure: Couldn't install collectd and nginx"
+```
+
+Software list:
+
+```
+116,nodered,1.0.0:debian,,nginx,1.21.0:docker,
+```
+
+### Interpret device capabilities to SmartREST Set supported operations (114)
+
+Device capabilities are reported as empty messages published to dedicated topics.
+
+|Name in Thin Edge|Topic|C8Y Name|
+|---|---|---|
+|Software Update|tedge/capabilities/software/update|c8y_SoftwareUpdate|
+|Software List|tedge/capabilities/software/list|unused|
+|Software Sync|tedge/capabilities/software/sync|unused|
+
+C8Y Mapper needs to report only `c8y_SoftwareUpdate` from this table, 
+the mapper subscribes only `tedge/capabilities/software/update`. 
+If the mapper observed that an empty payload message is published, the mapper 
+
+1. publishes an empty payload message to `tedge/capabilities/software/update` to clear the retained message.
+2. publishes SmartREST(114) to `c8y/s/us` as follwing.
+
+```
+114,c8y_SoftwareUpdate
+```
+
+***Future Extension:***\
+If C8Y Mapper supports more than `c8y_SoftwareUpdate` operation (e.g. `c8y_Restart`), 
+the mapper should subscribe more capabilities topics,
+and sends corresponded C8Y SupportedOpeation types with one `114` message.
+
+### Send SmartREST 500 Get PENDING operations
+
+The SmartREST 500 message goes out on the topic `c8y/s/us` to Mosquitto bridge.
 
 ```
 500
 ```
 
-### From SoftwareUpdate operation (528) to Thin Edge JSON Software Update Request [Discussion required]
+Then, the mapper will receive PENDING operations if they exist. 
+This translation is covered in [Translate from SoftwareUpdate operation (528) to Thin Edge JSON Software Update Request](#translate-from-softwareupdate-operation-528-to-thin-edge-json-software-update-request).
 
-Incoming in: `c8y/s/ds`
+## Runtime
 
-We need to make a decision here. There are two problems to think about.
-1. How can mapper know `type`?
-2. If user wants to install `collectd` from standard apt repository, how to know it?
+### Translate from SoftwareUpdate operation (528) to Thin Edge JSON Software Update Request
 
-#### How to determine the type?
-
-Proposal 1: Get to know the type from URLs. Anticipate the type from the file extensions in URLs.\
-It is aligned with proposal 1) in [Software List Response](#from-thin-edge-json-software-list-response-to-c8y_softwarelist116-discussion-required).
+The SmartREST `528` message comes onto the topic `c8y/s/ds` from C8Y Cloud.
 
 ```
-528,external_id,nodered,1.0.0,url1,install,collectd,5.7,url2,install,nginx,1.21.0,url3,install,mongodb,4.4.6,url4,delete
+528,external_id,nodered,1.0.0:debian, ,install,collectd,5.7:debian,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.tar.bz2,install,nginx,1.21.0:docker, ,install,mongodb,4.4.6:docker,,delete
 ```
 
-Proposal 2: Enforce user to name software in the format `<software>:<type>`\
-It is aligned with proposal 2) in [Software List Response](#from-thin-edge-json-software-list-response-to-c8y_softwarelist116-discussion-required).
+There are rules how to convert from SmartREST to ThinEdgeJSON.
+1. Mapper gets `type` from the version. Check where is the last ":" and assume that the keyword after the last ":" is the type.
+2. If the `URL` field is empty or a " " (space), mapper considers that the package should be installed the standard repository.
+3. If `type` is unknown, mapper should return operation `FAILED` to Cumulocity.
 
-```
-528,external_id,nodered:debian,1.0.0,url1,install,collectd:debian,5.7,url2,install,nginx:docker,1.21.0,url3,install,mongodb:docker,4.4.6,url4,delete
-```
-
-#### How to know that we want to install from the standard repository (e.g. apt install collectd)?
-
-Proposal A: Enforce user to use `tedge://<type>` as URL. e.g. `tedge://debian`, `tedge://docker`...
-
-```
-528,external_id,nodered,1.0.0,tedge://debian,install,collectd,5.7,tedge://debian,install,nginx,1.21.0,tedge://docker,install,mongodb,4.4.6,tedge://docker,delete
-```
-
-Proposal B: "A non-valid formatted URL (or missing URL) is interpreted as "install from repo".
-that includes: entering " " (space) as URL.
-
-```
-528,external_id,nodered,1.0.0,,install,collectd,5.7,,install,nginx,1.21.0,,install,mongodb,4.4.6, ,delete
-```
-
-#### Combination summary how SmartREST 528 looks
-
-Proposal 1 & A:
-
-```
-528,external_id,nodered,1.0.0,tedge://debian,install,collectd,5.7,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.deb,install,nginx,1.21.0,tedge://docker,install,mongodb,4.4.6,tedge://docker,delete
-```
-
-Proposal 2 & B:
-
-```
-528,external_id,nodered:debian,1.0.0, ,install,collectd:debian,5.7,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.deb,install,nginx:docker,1.21.0, ,install,mongodb:docker,4.4.6, ,delete
-```
-
-Then, outgoing to: `tedge/inbound/software/update`
+Then, the translated Thin Edge JSON goes on the topic `tedge/inbound/software/update` to SM Agent.
 
 ```json
 {
-    "software-update": [
+    "id": 123,
+    "updateList": [
         {
             "type": "debian",
-            "list": [
+            "modules": [
                 {
                     "name": "nodered",
                     "version": "1.0.0",
@@ -164,14 +212,14 @@ Then, outgoing to: `tedge/inbound/software/update`
                 {
                     "name": "collectd",
                     "version": "5.7",
-                    "url": "https://collectd.org/download/collectd-tarballs/collectd-5.12.0.deb",
+                    "url": "https://collectd.org/download/collectd-tarballs/collectd-5.12.0.tar.bz2",
                     "action": "install"
                 }
             ]
         },
         {
             "type": "docker",
-            "list": [
+            "modules": [
                 {
                     "name": "nginx",
                     "version": "1.21.0",
@@ -192,9 +240,26 @@ Then, outgoing to: `tedge/inbound/software/update`
 - Uninstallation terminologies are different in C8Y and Thin Edge JSON. C8Y uses `delete`, although Thin Edge JSON uses `remove`. 
 - The `type` assumption is possible to fail.
 
-### From Thin Edge JSON Software Update Executing to Operation Update EXECUTING (501)
+### Send SmartREST Operation Update EXECUTING (501) and FAILED (502) if translation of SoftwareUpdate operation failed
 
-Incoming to `tedge/outbound/software/update`.
+If the translation of [SoftwareUpdate Opeation](#translate-from-softwareupdate-operation-528-to-thin-edge-json-software-update-request) failed,
+The mapper publishes SmartREST messages to `c8y/s/us`.
+
+To change the status to `EXECUTING`:
+
+```
+501,c8y_SoftwareUpdate
+```
+
+Then, to change the status to `FAILED`:
+
+```
+502,c8y_SoftwareUpdate,"Failed to detect a package type of 'mongodb'"
+```
+
+### Translate from Thin Edge JSON Software Update Executing to Operation Update EXECUTING (501)
+
+Incoming to `tedge/commands/res/software/update` from SM Agent.
 
 ```json
 {
@@ -202,24 +267,23 @@ Incoming to `tedge/outbound/software/update`.
 }
 ```
 
-Outgoing to `c8y/s/us`.
+The mapper translates it and publishes on `c8y/s/us`.
 
 ```
 501,c8y_SoftwareUpdate
 ```
 
-### From Thin Edge JSON Software List Response to c8y_SoftwareList(116) and Operation Update SUCCESSFUL (503)
+### Translate from Thin Edge JSON Software List Response + Successful to c8y_SoftwareList(116) and Operation Update SUCCESSFUL (503)
 
-Incoming to `tedge/outbound/software/list`.
+The Thin Edge JSON message comes onto the topic `tedge/commands/res/software/update` from SM Agent.
 
 ```json
 {
-    "id": 123,
     "status": "SUCCESSFUL",
-    "list": [
+    "currentSoftwareList": [
         {
             "type": "debian",
-            "list": [
+            "modules": [
                 {
                     "name": "nodered",
                     "version": "1.0.0"
@@ -232,7 +296,7 @@ Incoming to `tedge/outbound/software/list`.
         },
         {
             "type": "docker",
-            "list": [
+            "modules": [
                 {
                     "name": "nginx",
                     "version": "1.21.0"
@@ -247,70 +311,28 @@ Incoming to `tedge/outbound/software/list`.
 }
 ```
 
-Outgoing to `c8y/s/us` with two messages.
+The mapper translates it into two messages and publishes onto `c8y/s/us`.
 
 The first message is SmartREST `116`, that is `c8y_SoftwareList`.
-Refer to [From Thin Edge JSON Software List Responce to c8y_SoftwareList (116)](#from-thin-edge-json-software-list-response-to-c8y_softwarelist116-discussion-required).
+The translation rules are the same as described in [From Thin Edge JSON Software List Responce to c8y_SoftwareList (116)](#translate-from-thin-edge-json-software-list-response-to-smartrest-c8y_softwarelist-116).
 
 The second message is operation update to `SUCCESSFUL`.
+
 ```
 503,c8y_SoftwareUpdate
 ```
 
-### From Thin Edge JSON Software List Response to c8y_SoftwareList(116) and Operation Update FAILED (502)
+### Send SmartREST Operation Update FAILED (502) only if sending SoftwareList (116) failed
 
-Incoming to `tedge/outbound/software/list`.
+It's possible that sending `c8y_SoftwareList` (116) fails due to the huge payload size.
+In this case, the mapper should send only operation `FAILED` to C8Y cloud. 
 
-```json
-{
-    "status":"FAILED",
-    "reason":"Partial failure: Couldn't install collectd and nginx",
-    "current-software-list": [
-        {
-            "type": "debian",
-            "list": [
-                {
-                    "name": "nodered",
-                    "version": "1.0.0"
-                }
-            ]
-        },
-        {
-            "type": "docker",
-            "list": [
-                {
-                    "name": "mongodb",
-                    "version": "4.4.6"
-                }
-            ]
-        }
-    ]
-}
-```
-
-Outgoing to `c8y/s/us` with two messages.
-
-The first message is SmartREST `116`, that is `c8y_SoftwareList`.
-Refer to [From Thin Edge JSON Software List Responce to c8y_SoftwareList (116)](#from-thin-edge-json-software-list-response-to-c8y_softwarelist116-discussion-required).
-
-The second message is operation update to `FAILED` with the given reason.
+Topic to publish: `c8y/s/us`,
 
 ```
-502,c8y_SoftwareUpdate,"Partial failure: Couldn't install collectd and nginx"
+502,c8y_SoftwareUpdate,"Failed to send the current software list after software update operation"
 ```
 
-## From Thin Edge JSON device capabilities to c8y_SupportedOperations(114) [Under the discussion]
+### Translate from Thin Edge JSON Software List Response + Failed to c8y_SoftwareList(116) and Operation Update FAILED (503)
 
-Incoming to `where?`
-
-```json
-{
-  "unknown": "no spec yet available"
-}
-```
-
-Outgoing to `c8y/s/us`.
-
-```
-114,c8y_SoftwareUpdate,c8y_Restart
-```
+This case is the same as [SM Agent Startup](#translate-from-thin-edge-json-softwareupdateoperation-failed-to-smartrest-operation-update-failed-502-and-software-list-116).
