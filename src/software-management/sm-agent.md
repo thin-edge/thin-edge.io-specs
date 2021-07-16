@@ -311,6 +311,7 @@ Topic to subscribe for the software update response: `tedge/commands/res/softwar
 
 ```json
 {
+    "id": 123,
     "status": "EXECUTING"
 }
 ```
@@ -319,6 +320,7 @@ Topic to subscribe for the software update response: `tedge/commands/res/softwar
 
 ```json
 {
+    "id": 123,
     "status": "SUCCESSFUL",
     "currentSoftwareList": [
         {
@@ -357,6 +359,7 @@ Sending the current software list along with the status will help the cloud prov
 
 ```json
 {
+    "id": 123,
     "status":"FAILED",
     "reason":"Partial failure: Couldn't install collectd and nginx",
     "currentSoftwareList": [
