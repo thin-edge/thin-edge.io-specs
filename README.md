@@ -1,6 +1,6 @@
 # Thin Edge Specifications
 
-View the specifications online from here[./src/SUMMARY.md]
+View the specifications online from [here](./src/SUMMARY.md)
 
 # How to generate the documentation locally
 This book is generated using [`mdbook`](https://lib.rs/crates/mdbook).
