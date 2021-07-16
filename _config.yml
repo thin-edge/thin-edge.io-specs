@@ -1,3 +1,4 @@
+title: Thin Edge Design Specifications
 plugins:
   - jekyll-relative-links
   - jekyll-spaceship
@@ -5,4 +6,4 @@ relative_links:
   enabled: true
   collections: true
 include:
-  - README.md
+  - ./src/SUMMARY.md
