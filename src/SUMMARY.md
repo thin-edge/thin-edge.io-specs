@@ -8,3 +8,4 @@
 ## Software management
 - [Software management](software-management/README.md)
     - [Package Manager Plugin API](software-management/plugin-api.md)
+    - [Software Management Agent](software-management/sm-agent.md)
