@@ -1,0 +1,282 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Thin Edge Json - Thin Edge Specifications</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../favicon.svg">
+                        <link rel="shortcut icon" href="../favicon.png">
+                <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+                <link rel="stylesheet" href="../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../telemetry-data/thin-edge-json.html" class="active"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="../telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../software-management/index.html"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../software-management/plugin-api.html"><strong aria-hidden="true">2.1.</strong> Package Manager Plugin API</a></li></ol></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Thin Edge Specifications</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- toc -->
+<h1 id="thin-edge-json"><a class="header" href="#thin-edge-json">Thin-Edge-Json</a></h1>
+<p>Thin Edge JSON is a lightweight format used in <code>thin-edge.io</code> to represent measurements data.
+This format can be used to represent single-valued measurements, multi-valued measurements
+or a combination of both along with some auxiliary data like the timestamp at which the measurement(s) was generated.</p>
+<h2 id="single-valued-measurements"><a class="header" href="#single-valued-measurements">Single-valued measurements</a></h2>
+<p>Simple single-valued measurements like temperature or pressure measurement with a single value can be expressed as follows:</p>
+<pre><code class="language-json">{
+    &quot;temperature&quot;: 25
+}
+</code></pre>
+<p>where the key represents the measurement type, and the value represents the measurement value.
+The keys can only have alphanumeric characters, and the &quot;_&quot; (underscore) character but must not start with an underscore.
+The values can only be numeric.
+String, Boolean or other JSON object values are not allowed.</p>
+<h2 id="multi-valued-measurements"><a class="header" href="#multi-valued-measurements">Multi-valued measurements</a></h2>
+<p>A multi-valued measurement is a measurement that is comprised of multiple values. Here is the representation of a
+<code>three_phase_current</code> measurement that consists of <code>L1</code>, <code>L2</code> and <code>L3</code> values, representing the current on each phase:</p>
+<pre><code class="language-json">{
+    &quot;three_phase_current&quot;: {
+      &quot;L1&quot;: 9.5,
+      &quot;L2&quot;: 10.3,
+      &quot;L3&quot;: 8.8
+    }
+}
+</code></pre>
+<p>where the key is the top-level measurement type and value is a JSON object having further key-value pairs 
+representing each aspect of the multi-valued measurement.
+Only one level of nesting is allowed, meaning the values of the measurement keys at the inner level can only be numeric values.
+For example, a multi-level measurement as follows is NOT valid: </p>
+<pre><code class="language-json">{ 
+    &quot;three_phase_current&quot;: {
+        &quot;phase1&quot;: {
+            &quot;L1&quot;: 9.5
+        },
+        &quot;phase2&quot;: {
+            &quot;L2&quot;: 10.3
+        },
+        &quot;phase3&quot;: {
+            &quot;L3&quot;: 8.8
+        }
+    }
+}
+</code></pre>
+<p>because the values at the second level(<code>phase1</code>, <code>phase2</code> and <code>phase3</code>) are not numeric values.</p>
+<h2 id="grouping-measurements"><a class="header" href="#grouping-measurements">Grouping measurements</a></h2>
+<p>Multiple single-valued and multi-valued measurements can be grouped into a single Thin Edge JSON message as follows:</p>
+<pre><code class="language-json">{ 
+    &quot;temperature&quot;: 25,
+    &quot;three_phase_current&quot;: {
+        &quot;L1&quot;: 9.5,
+        &quot;L2&quot;: 10.3,
+        &quot;L3&quot;: 8.8
+    },
+    &quot;pressure&quot;: 98 
+}
+</code></pre>
+<p>The grouping of measurements is usually done to represent measurements collected at the same instant of time.</p>
+<h2 id="auxiliary-measurement-data"><a class="header" href="#auxiliary-measurement-data">Auxiliary measurement data</a></h2>
+<p>When <code>thin-edge.io</code> receives a measurement, it will add a timestamp to it before any further processing.
+If the user doesn't want to rely on <code>thin-edge.io</code> generated timestamps,
+an explicit timestamp can be provided in the measurement message itself by adding the time value as a string 
+in ISO 8601 format using <code>time</code> as the key name, as follows:</p>
+<pre><code class="language-json">{ 
+    &quot;time&quot;: &quot;2020-10-15T05:30:47+00:00&quot;, 
+    &quot;temperature&quot;: 25, 
+    &quot;location&quot;: { 
+        &quot;latitude&quot;: 32.54, 
+        &quot;longitude&quot;: -117.67, 
+        &quot;altitude&quot;: 98.6 
+    }, 
+    &quot;pressure&quot;: 98 
+}
+</code></pre>
+<p>The <code>time</code> key is a reserved keyword and hence can not be used as a measurement key.
+The <code>time</code> field must be defined at the root level of the measurement JSON and not allowed at any other level,
+like inside the object value of a multi-valued measurement.
+Non-numeric values like the ISO 8601 timestamp string are allowed only for such reserved keys and not for regular measurements. </p>
+<p>Here is the complete list of reserved keys that has special meanings inside the <code>thin-edge.io</code> framework
+and hence must not be used as measurement keys:</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody>
+<tr><td>time</td><td>Timestamp in ISO 8601 string format</td></tr>
+<tr><td>type</td><td>Internal to <code>thin-edge.io</code></td></tr>
+</tbody></table>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../telemetry-data/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../telemetry-data/mqtt-bus.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../telemetry-data/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../telemetry-data/mqtt-bus.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+                <script type="text/javascript" src="../mermaid.min.js"></script>
+                <script type="text/javascript" src="../mermaid-init.js"></script>
+        
+        
+    </body>
+</html>

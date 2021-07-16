@@ -1,0 +1,572 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Thin Edge Specifications</title>
+                <meta name="robots" content="noindex" />
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="favicon.svg">
+                        <link rel="shortcut icon" href="favicon.png">
+                <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+                <link rel="stylesheet" href="css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="software-management/index.html"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="software-management/plugin-api.html"><strong aria-hidden="true">2.1.</strong> Package Manager Plugin API</a></li></ol></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Thin Edge Specifications</h1>
+
+                    <div class="right-buttons">
+                                                <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- toc -->
+<h1 id="sourcing-processing-and-publishing-telemetry-data"><a class="header" href="#sourcing-processing-and-publishing-telemetry-data">Sourcing, Processing and Publishing Telemetry Data</a></h1>
+<p>Thin-edge.io primary use-case is to:</p>
+<ol>
+<li>collect telemetry data on a device from various sources, sensors, and child devices,</li>
+<li>process these data with analytics components</li>
+<li>forward part of the processed to the cloud.</li>
+</ol>
+<p>This flow of data is organized over :</p>
+<ol>
+<li>an <a href="telemetry-data/./mqtt-bus.html">MQTT bus</a> where the local components publish and exchange messages,</li>
+<li>a canonical data format, <a href="telemetry-data/./thin-edge-json.html">thin-edge-json</a>, that let the components exchange telemetry data
+independently of the connected cloud</li>
+<li>a mapper process that translates canonical messages and forward them to the cloud.</li>
+</ol>
+<pre class="mermaid">graph TD
+    src(Source)
+    c8y(C8y Cloud)
+    az(Azure Cloud)
+
+    mapSrc((Source Mapper))
+    proc((Analytics))
+    mapAz((C8y Mapper))
+    mapC8y((Azure Mapper))
+
+    subgraph Mqtt Bus
+        raw&gt;Source specific messages]
+        tej&gt;Thin Edge Json messages]
+        cloud&gt;Cloud specific messages]
+        bridge&gt;Bridge]
+    end
+
+    src --&gt; raw
+    raw --&gt; mapSrc --&gt; tej
+    tej --&gt; proc --&gt; tej
+    tej --&gt; mapC8y --&gt; cloud
+    tej --&gt; mapAz --&gt; cloud
+    cloud --&gt; bridge --&gt; c8y
+    cloud --&gt; bridge --&gt; az
+</pre>
+<div style="break-before: page; page-break-before: always;"></div><!-- toc -->
+<h1 id="thin-edge-json"><a class="header" href="#thin-edge-json">Thin-Edge-Json</a></h1>
+<p>Thin Edge JSON is a lightweight format used in <code>thin-edge.io</code> to represent measurements data.
+This format can be used to represent single-valued measurements, multi-valued measurements
+or a combination of both along with some auxiliary data like the timestamp at which the measurement(s) was generated.</p>
+<h2 id="single-valued-measurements"><a class="header" href="#single-valued-measurements">Single-valued measurements</a></h2>
+<p>Simple single-valued measurements like temperature or pressure measurement with a single value can be expressed as follows:</p>
+<pre><code class="language-json">{
+    &quot;temperature&quot;: 25
+}
+</code></pre>
+<p>where the key represents the measurement type, and the value represents the measurement value.
+The keys can only have alphanumeric characters, and the &quot;_&quot; (underscore) character but must not start with an underscore.
+The values can only be numeric.
+String, Boolean or other JSON object values are not allowed.</p>
+<h2 id="multi-valued-measurements"><a class="header" href="#multi-valued-measurements">Multi-valued measurements</a></h2>
+<p>A multi-valued measurement is a measurement that is comprised of multiple values. Here is the representation of a
+<code>three_phase_current</code> measurement that consists of <code>L1</code>, <code>L2</code> and <code>L3</code> values, representing the current on each phase:</p>
+<pre><code class="language-json">{
+    &quot;three_phase_current&quot;: {
+      &quot;L1&quot;: 9.5,
+      &quot;L2&quot;: 10.3,
+      &quot;L3&quot;: 8.8
+    }
+}
+</code></pre>
+<p>where the key is the top-level measurement type and value is a JSON object having further key-value pairs 
+representing each aspect of the multi-valued measurement.
+Only one level of nesting is allowed, meaning the values of the measurement keys at the inner level can only be numeric values.
+For example, a multi-level measurement as follows is NOT valid: </p>
+<pre><code class="language-json">{ 
+    &quot;three_phase_current&quot;: {
+        &quot;phase1&quot;: {
+            &quot;L1&quot;: 9.5
+        },
+        &quot;phase2&quot;: {
+            &quot;L2&quot;: 10.3
+        },
+        &quot;phase3&quot;: {
+            &quot;L3&quot;: 8.8
+        }
+    }
+}
+</code></pre>
+<p>because the values at the second level(<code>phase1</code>, <code>phase2</code> and <code>phase3</code>) are not numeric values.</p>
+<h2 id="grouping-measurements"><a class="header" href="#grouping-measurements">Grouping measurements</a></h2>
+<p>Multiple single-valued and multi-valued measurements can be grouped into a single Thin Edge JSON message as follows:</p>
+<pre><code class="language-json">{ 
+    &quot;temperature&quot;: 25,
+    &quot;three_phase_current&quot;: {
+        &quot;L1&quot;: 9.5,
+        &quot;L2&quot;: 10.3,
+        &quot;L3&quot;: 8.8
+    },
+    &quot;pressure&quot;: 98 
+}
+</code></pre>
+<p>The grouping of measurements is usually done to represent measurements collected at the same instant of time.</p>
+<h2 id="auxiliary-measurement-data"><a class="header" href="#auxiliary-measurement-data">Auxiliary measurement data</a></h2>
+<p>When <code>thin-edge.io</code> receives a measurement, it will add a timestamp to it before any further processing.
+If the user doesn't want to rely on <code>thin-edge.io</code> generated timestamps,
+an explicit timestamp can be provided in the measurement message itself by adding the time value as a string 
+in ISO 8601 format using <code>time</code> as the key name, as follows:</p>
+<pre><code class="language-json">{ 
+    &quot;time&quot;: &quot;2020-10-15T05:30:47+00:00&quot;, 
+    &quot;temperature&quot;: 25, 
+    &quot;location&quot;: { 
+        &quot;latitude&quot;: 32.54, 
+        &quot;longitude&quot;: -117.67, 
+        &quot;altitude&quot;: 98.6 
+    }, 
+    &quot;pressure&quot;: 98 
+}
+</code></pre>
+<p>The <code>time</code> key is a reserved keyword and hence can not be used as a measurement key.
+The <code>time</code> field must be defined at the root level of the measurement JSON and not allowed at any other level,
+like inside the object value of a multi-valued measurement.
+Non-numeric values like the ISO 8601 timestamp string are allowed only for such reserved keys and not for regular measurements. </p>
+<p>Here is the complete list of reserved keys that has special meanings inside the <code>thin-edge.io</code> framework
+and hence must not be used as measurement keys:</p>
+<table><thead><tr><th>Key</th><th>Description</th></tr></thead><tbody>
+<tr><td>time</td><td>Timestamp in ISO 8601 string format</td></tr>
+<tr><td>type</td><td>Internal to <code>thin-edge.io</code></td></tr>
+</tbody></table>
+<div style="break-before: page; page-break-before: always;"></div><!-- toc -->
+<h1 id="the-thin-edge-mqtt-bus"><a class="header" href="#the-thin-edge-mqtt-bus">The Thin Edge MQTT bus</a></h1>
+<h2 id="sending-measurements-to-thin-edgeio"><a class="header" href="#sending-measurements-to-thin-edgeio">Sending measurements to thin-edge.io</a></h2>
+<p>The <code>thin-edge.io</code> framework exposes some MQTT endpoints that can be used by local processes
+to exchange data between themselves as well as to get some data forwarded to the cloud.
+It will essentially act like an MQTT broker against which you can write your application logic.
+Other thin-edge processes can use this broker as an inter-process communication mechanism by publishing and 
+subscribing to various MQTT topics.
+Any data can be forwarded to the connected cloud-provider as well, by publishing the data to some standard topics.</p>
+<p>All topics with the prefix <code>tedge/</code> are reserved by <code>thin-edge.io</code> for this purpose.
+To send measurements to <code>thin-edge.io</code>, the measurements represented in Thin Edge JSON format can be published 
+to the <code>tedge/measurements</code> topic.
+Other processes running on the thin-edge device can subscribe to this topic to process these measurements.</p>
+<p>If the messages published to this <code>tedge/measurements</code> topic is not a well-formed Thin Edge JSON, 
+then that message won’t be processed by <code>thin-edge.io</code>, not even partially,
+and an appropriate error message on why the validation failed will be published to a dedicated <code>tedge/errors</code> topic.
+The messages published to this topic will be highly verbose error messages and can be used for any debugging during development.
+You should not rely on the structure of these error messages to automate any actions as they are purely textual data 
+and bound to change from time-to-time.</p>
+<p>More topics will be added under the <code>tedge/</code> topic in future to support more data types like events, alarms etc.
+So, it is advised to avoid any sub-topics under <code>tedge/</code> for any other data exchange between processes.</p>
+<p>Here is the complete list of topics reserved by <code>thin-edge.io</code> for its internal working:</p>
+<table><thead><tr><th>Topic</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>tedge/</code></td><td>Reserved root topic of <code>thin-edge.io</code></td></tr>
+<tr><td><code>tedge/measurements</code></td><td>Topic to publish measurements to <code>thin-edge.io</code></td></tr>
+<tr><td><code>tedge/errors</code></td><td>Topic to subscribe to receive any error messages emitted by <code>thin-edge.io</code> while processing measurements</td></tr>
+</tbody></table>
+<h2 id="sending-measurements-to-the-cloud"><a class="header" href="#sending-measurements-to-the-cloud">Sending measurements to the cloud</a></h2>
+<p>The <code>thin-edge.io</code> framework allows users forward all the measurements generated and published to
+<code>tedge/measurements</code> MQTT topic in the thin-edge device to any IoT cloud provider that it is connected to,
+with the help of a <em>mapper</em> component designed for that cloud.
+The responsibility of a mapper is to subscribe to the <code>tedge/measurements</code> topic to receive all incoming measurements 
+represented in the cloud vendor neutral Thin Edge JSON format, to a format that the connected cloud understands.
+Refer to <a href="telemetry-data/./mapper.html">Cloud Message Mapper Architecture</a> for more details on the mapper component.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="software-management"><a class="header" href="#software-management">Software management</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="package-manager-plugin-api"><a class="header" href="#package-manager-plugin-api">Package Manager Plugin API</a></h1>
+<p>Thin-edge uses plugins to delegate to the appropriate package managers and installers
+all the software management operations: installation of packages, uninstallations and queries.</p>
+<ul>
+<li>A package manager plugin acts as a facade for a specific package manager.</li>
+<li>A plugin is an executable that follows the <a href="software-management/./#plugin-api">plugin API</a>.</li>
+<li>On a device, several plugins can be installed to deal with different kinds of software modules.</li>
+<li>Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.</li>
+<li>All the actions on a software module are directed to the plugin which name is the module type name.</li>
+<li>Among all the plugin, one can be distinguished as the default plugin.</li>
+<li>The default plugin is invoked when no software module type can be determined by the system.</li>
+<li>Several plugins can co-exist for a given package manager as long as they are given different name.
+Each can implement a specific software management policy.</li>
+</ul>
+<h2 id="plugin-repository"><a class="header" href="#plugin-repository">Plugin repository</a></h2>
+<ul>
+<li>To be used by thin-edge, a plugin has to stored in the directory <code>/etc/tedge/sm-plugins</code>.</li>
+<li>The same plugin can be given different names, using virtual links.</li>
+<li>One of the plugin can be given the name <code>default</code>. This plugin is then used as the default plugin.</li>
+</ul>
+<p>On start-up and sighup, the sm-agent registers the plugins as follow:</p>
+<ol>
+<li>Iterate over the executable file of the directory <code>/etc/tedge/sm-plugins</code>.</li>
+<li>Check the executable is indeed a plugin, calling the <a href="software-management/./#the_list_command"><code>list</code></a> command.</li>
+</ol>
+<h2 id="plugin-api"><a class="header" href="#plugin-api">Plugin API</a></h2>
+<ul>
+<li>A plugin must implement all the commands used by the sm-agent of thin-edge,
+and support all the options for these commands.</li>
+<li>A plugin should not support extra command or option.</li>
+<li>A plugin might have a configuration file.
+<ul>
+<li>It can be a list of remote repositories, or a list of software modules to be excluded.</li>
+<li>These configuration files can be managed from the cloud via the sm-agent (TODO: how).</li>
+</ul>
+</li>
+</ul>
+<h3 id="input-output-and-errors"><a class="header" href="#input-output-and-errors">Input, Output and Errors</a></h3>
+<ul>
+<li>The plugins are called by the sm-agent using a child process for each action.</li>
+<li>For the current list of commands there is no input beyond the command arguments,
+and a plugin can close its <code>stdin</code>.</li>
+<li>The <code>stdout</code> and <code>stderr</code> of the process running a plugin command are captured by the sm-agent.
+<ul>
+<li>These streams don't have to be the streams returned by the underlying package manager.
+It can be a one sentence summary of the error, redirecting the administrator to the package manager logs.</li>
+</ul>
+</li>
+<li>A plugin must return the appropriate exit status after each command.
+<ul>
+<li>In no cases, the error status of the underlying package manager should be reported.</li>
+</ul>
+</li>
+<li>The exit status are interpreted by sm-agent as follows:
+<ul>
+<li><strong><code>0</code></strong>: success.</li>
+<li><strong><code>1</code></strong>: usage. The command arguments cannot be interpreted, and the command has not been launched.</li>
+<li><strong><code>2</code></strong>: failure. The command failed and there is no point to retry.</li>
+<li><strong><code>3</code></strong>: retry. The command failed but might be successful later (for instance, when the network will be back).</li>
+</ul>
+</li>
+<li>If the command fails to return within 5 minutes, the sm-agent reports a timeout error:
+<ul>
+<li><strong><code>4</code></strong>: timeout.</li>
+</ul>
+</li>
+</ul>
+<h3 id="the-list-command"><a class="header" href="#the-list-command">The <code>list</code> command</a></h3>
+<p>When called with the <code>list</code> command, a plugin returns the list of software modules that have been installed with this plugin.</p>
+<pre><code class="language-shell">$ debian-plugin list
+...
+{&quot;name&quot;:&quot;collectd-core&quot;,&quot;version&quot;:&quot;5.8.1-1.3&quot;}
+{&quot;name&quot;:&quot;mosquitto&quot;,&quot;version&quot;:&quot;1.5.7-1+deb10u1&quot;}
+...
+</code></pre>
+<p>Contract:</p>
+<ul>
+<li>This command take no arguments.</li>
+<li>If an error status is returned, the executable is removed from the list of plugins.</li>
+<li>The list is returned using the <a href="https://jsonlines.org/">jsonlines</a> format.
+<ul>
+<li><strong><code>name</code></strong>: the name of the module. This name is the name that has been used to install it and that need to be used to remove it.</li>
+<li><strong><code>version</code></strong>: the version currently installed. This is a string that can only been interpreted in the context of the plugin.</li>
+</ul>
+</li>
+</ul>
+<h3 id="the-prepare-command"><a class="header" href="#the-prepare-command">The <code>prepare</code> command</a></h3>
+<p>The <code>prepare</code> command is invoked by the sm-agent before a sequence of install and remove commands</p>
+<pre><code>$ /etc/tedge/sm-plugins/debian prepare
+$ /etc/tedge/sm-plugins/debian install x
+$ /etc/tedge/sm-plugins/debian install y
+$ /etc/tedge/sm-plugins/debian remove z
+$ /etc/tedge/sm-plugins/debian finalize
+</code></pre>
+<p>For many plugins this command will do nothing. However, It gives an opportunity to the plugin to:</p>
+<ul>
+<li>Update the dependencies before an operation, *i.e. a sequence of actions.
+Notably, a debian plugin can update the <code>apt</code> cache issuing an <code>apt-get update</code>.</li>
+<li>Start a transaction, in case the plugin is able to manage rollbacks.</li>
+</ul>
+<p>Contract:</p>
+<ul>
+<li>This command take no arguments.</li>
+<li>No output is expected.</li>
+<li>If the <code>prepare</code> command fails, then the planned sequences of actions (.i.e the whole sm operation) is cancelled. </li>
+</ul>
+<h3 id="the-finalize-command"><a class="header" href="#the-finalize-command">The <code>finalize</code> command</a></h3>
+<p>The <code>finalize</code> command closes a sequence of install and remove commands started by a <code>prepare</code> command.</p>
+<p>This can be a no-op, but this is also an opportunity to:</p>
+<ul>
+<li>Remove any unnecessary software module after a sequence of actions.</li>
+<li>Commit or rollback the sequence of actions.</li>
+<li>Restart any processes using the modules, e.g. restart the analytics engines if the modules have changed</li>
+</ul>
+<p>Contract:</p>
+<ul>
+<li>This command take no arguments.</li>
+<li>No output is expected.</li>
+<li>This command might check (but doesn't have to) that the list of install and remove command has been consistent.
+<ul>
+<li>For instance, a plugin might raise an error after the sequence <code>prepare;install a; remove a-dependency; finalize</code>.</li>
+</ul>
+</li>
+<li>If the <code>finalize</code> command fails, then the planned sequences of actions (.i.e the whole sm operation) is reported as failed,
+even if all the atomic actions has been successfully completed.</li>
+</ul>
+<h3 id="the-install-command"><a class="header" href="#the-install-command">The <code>install</code> command</a></h3>
+<p>The <code>install</code> command installs a software module, possibly of some expected version.</p>
+<pre><code>$ plugin install NAME [--version VERSION] [--file FILE]
+</code></pre>
+<p>Contract:</p>
+<ul>
+<li>The command requires a single mandatory argument: the software module name.
+<ul>
+<li>This module name is meaningful only to the plugin.</li>
+</ul>
+</li>
+<li>An optional version string can be provided.
+<ul>
+<li>This version string is meaningful only to the plugin
+and is transmitted unchanged from the cloud to the plugin.</li>
+<li>The version string can include constraints (as at least that version),
+from the sm-agent viewpoint this is no more than a string.</li>
+<li>If no version is provided the plugin is free to install the more appropriate version.</li>
+</ul>
+</li>
+<li>An optional file path can be provided.
+<ul>
+<li>When the device administrator provides an url,
+the sm-agent downloads the software module on the device,
+then invoke the install command with a path to that file.</li>
+<li>If no file is provided, the plugin has to derive the appropriate location from its repository
+and to download the software module accordingly.</li>
+</ul>
+</li>
+<li>The command installs the requested software module and any dependencies that might be required.
+<ul>
+<li>It is up to the plugin to define if this command triggers an installation or an upgrade.
+It depends on the presence of a previous version on the device and
+of the ability of the package manager to deal with concurrent versions for a module. </li>
+<li>A plugin might not be able to install dependencies.
+In that case, the device administrator will have to request explicitly the dependencies to be installed first.</li>
+<li>After a successful sequence <code>prepare; install foo; finalize</code> the module <code>foo</code> must be reported by the <code>list</code> command. </li>
+<li>After a successful sequence <code>prepare; install foo --version v; finalize</code> the module <code>foo</code> must be reported by the <code>list</code> command with the version <code>v</code>.
+If the plugin manage concurrent versions, the module <code>foo</code> might also be reported with versions already installed before the operation.</li>
+<li>A plugin is not required to detect inconsistent actions as <code>prepare; install a; remove a-dependency; finalize</code>.</li>
+<li>This is not an error to run this command twice or when the module is already installed.</li>
+</ul>
+</li>
+<li>An error must be reported if:
+<ul>
+<li>The module name is unknown.</li>
+<li>There is no version for the module that matches the constraint provided by the <code>--version</code> option.</li>
+<li>The file content provided by <code>--file</code> option:
+<ul>
+<li>is not in the expected format,</li>
+<li>doesn't correspond to the software module name,</li>
+<li>has a version that doesn't match the constraint provided by the <code>--version</code> option (if any).</li>
+</ul>
+</li>
+<li>The module cannot be downloaded.</li>
+<li>The module cannot be installed.</li>
+</ul>
+</li>
+</ul>
+<h3 id="the-remove-command"><a class="header" href="#the-remove-command">The <code>remove</code> command</a></h3>
+<p>The <code>remove</code> command uninstalls a software module, and possibly its dependencies if no other modules are dependent on those.</p>
+<pre><code>$ plugin remove NAME [--version VERSION]
+</code></pre>
+<p>Contract:</p>
+<ul>
+<li>The command requires a single mandatory argument: the module name.
+<ul>
+<li>This module name is meaningful only to the plugin
+and is transmitted unchanged from the cloud to the plugin.</li>
+</ul>
+</li>
+<li>An optional version string can be provided.
+<ul>
+<li>This version string is meaningful only to the plugin
+and is transmitted unchanged from the cloud to the plugin.</li>
+</ul>
+</li>
+<li>The command uninstall the requested module and possibly any dependencies that are no more required.
+<ul>
+<li>If a version is provided, only the module of that version is removed.
+This is in-practice useful only for a package manager that is able to install concurrent versions of a module.</li>
+<li>After a successful sequence <code>prepare; remove foo; finalize</code> the module <code>foo</code> must no more be reported by the <code>list</code> command. </li>
+<li>After a successful sequence <code>prepare; remove foo --version v; finalize</code> the module <code>foo</code> no more be reported by the <code>list</code> command with the version <code>v</code>.
+If the plugin manage concurrent versions, the module <code>foo</code> might still be reported with versions already installed before the operation.</li>
+<li>A plugin is not required to detect inconsistent actions as <code>prepare; remove a; install a-reverse-dependency; finalize</code>.</li>
+<li>This is not an error to run this command twice or when the module is not installed.</li>
+</ul>
+</li>
+<li>An error must be reported if:
+<ul>
+<li>The module name is unknown.</li>
+<li>The module cannot be uninstalled.</li>
+</ul>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+                <script type="text/javascript" src="mermaid.min.js"></script>
+                <script type="text/javascript" src="mermaid-init.js"></script>
+        
+                        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+                
+    </body>
+</html>
