@@ -42,7 +42,6 @@ Outgoing on the topic `tedge/commands/req/software/list` to SM Agent.
 ```
 
 The mapper must generate a unique ID.
-Refer to The current epoch time value would be good candidate.
 Refer to [SM Agent specification](../sm-agent.md) for more details.
 
 ### Translate from Thin Edge JSON Software List Response to SmartREST Set Software List (116) 
@@ -210,6 +209,7 @@ The Thin Edge JSON message comes onto the topic `tedge/commands/res/software/upd
 
 ```json
 {
+    "id": 123,
     "status": "SUCCESSFUL",
     "currentSoftwareList": [
         {
@@ -259,6 +259,7 @@ The Thin Edge JSON message comes on the topic `tedge/commands/res/software/updat
 
 ```json
 {
+    "id": 123,
     "status":"FAILED",
     "reason":"Partial failure: Couldn't install collectd and nginx",
     "currentSoftwareList": [

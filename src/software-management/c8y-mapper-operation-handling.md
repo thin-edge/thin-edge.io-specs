@@ -7,28 +7,6 @@ In this page, we focus on the contract between C8Y Mapper and C8Y Cloud.
 If you want to know the mapping rules, 
 please refer to [Thin Edge JSON Mapping to/from C8Y](./thin-edge-json-mapping-to-from-c8y.md).
 
-## Flow at C8Y Mapper Startup
-
-```mermaid
-sequenceDiagram
-    participant SM Agent
-    participant C8Y Mapper
-    participant C8Y Cloud
-
-    C8Y Mapper ->> SM Agent: Software List Request (retained)
-    SM Agent -->> C8Y Mapper: Software List
-    C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
-```
-
-|ID|Description|Example Payload|Type|
-|---|---|---|---|
-|[116](https://cumulocity.com/guides/device-sdk/mqtt/#a-name116set-software-list-116a)|Set software list|`116,software1,version1,url1,software2,version2,url2`|Publish|
-
-Note:
-- The Software List Request from c8y Mapper should set a retain flag. 
-  In case that SM Agent is down when c8y Mapper starts up, 
-  SM Agent can consume the request after SM Agent wakes up.
-
 ## Flow at SM Agent Startup
 
 ```mermaid
@@ -37,21 +15,26 @@ sequenceDiagram
     participant C8Y Mapper
     participant C8Y Cloud
 
-    alt If there is a SoftwareUpdateOperation EXECUTING status
-    SM Agent ->> C8Y Mapper: SoftwareUpdate Operation FAILED
-    C8Y Mapper ->> C8Y Cloud: SmartREST 502: Update operation status to FAILED
-    C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
+    alt If SM Agent reports failure of last SoftwareUpdateOperation on a startup
+      SM Agent ->> C8Y Mapper: SoftwareUpdate Operation FAILED
+      C8Y Mapper ->> C8Y Cloud: SmartREST 502: Update operation status to FAILED
+      C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
     end
 
-    SM Agent ->> C8Y Mapper: Declare SoftwareUpdate capability (retained)
+    SM Agent ->> C8Y Mapper: Declare SoftwareUpdate capability
+    SM Agent ->> C8Y Mapper: Declare SoftwareList capability
     C8Y Mapper ->> C8Y Mapper: Collect all device's capabilities
     C8Y Mapper ->> C8Y Cloud: SmartREST 114: Send c8y_SoftwareUpdate (or more) as SupportedOperations
-    C8Y Mapper ->> C8Y Mapper: Clear the retained message
     
-    C8Y Mapper ->> C8Y Cloud: SmartREST 500: Get PENDING operations
-    C8Y Cloud -->> C8Y Mapper: SmartREST 528: SoftwareUpdate operation and others
-    
-    Note right of C8Y Mapper: the following flow is the same as the flow in runtime
+    alt If receiving both SoftwareUpdate and SoftwareList capabilities
+      C8Y Mapper ->> SM Agent: Software List Request
+      SM Agent -->> C8Y Mapper: Software List
+      C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
+      
+      C8Y Mapper ->> C8Y Cloud: SmartREST 500: Get PENDING operations
+      C8Y Cloud -->> C8Y Mapper: SmartREST 528: SoftwareUpdate operation and others
+      Note right of C8Y Mapper: the following flow is the same as the flow in runtime
+    end
 ```
 
 |ID|Description|Example Payload|Type|
@@ -62,13 +45,21 @@ sequenceDiagram
 |[500](https://cumulocity.com/guides/device-sdk/mqtt/#a-name500get-pending-operations-500a)|Get PENDING operations|`500`|Publish|
 |[528](https://cumulocity.com/guides/device-sdk/mqtt/#a-name528update-software-528a)|Update Software|`528,external_id,software1,version1,url1,install,software2,version2,url2,delete`|Subscribe|
 
-Note:
+This flow is consists of 4 parts.
+1. Report operation failed to C8Y Cloud.
+2. Receive device capabilities from SM Agent and translate as `C8Y_SupportedOperatons` and report them to C8Y Cloud.
+3. Trigger a Set Software List request to SM Agent as a response of receiving Software List capability. 
+4. Trigger a Get Software Update request to C8Y Cloud as a response of receiving Software Update capability.
+
+Both "SM Agent is up but C8Y Mapper is down" and "SM Agent is down but C8Y Mapper is up" cases must be considered here.
+Namely, the device capabilities must be delivered to C8Y Mapper in any case.
+
+Other notes:
 - Collecting all device's capabilities (e.g. SoftwareUpdate, Restart, etc.) are required 
   so that the mapper sends SmartREST `114` with all necessary supported operations.
 - SM Agent might publish more capabilities than C8Y cloud supports. 
   In this case, the mapper doesn't need to subscribe the unsupported capability topics.
 - `c8y_SoftwareUpdate` is supported in c8y version 10.7 and onwards.
-- To clear the retained message, publish an empty payload with a retain flag on the topic.
 - C8Y mapper can consider that the SM Agent is ready for a new operation 
   after the agent publishes device's capabilities.
 - SmartREST `500` returns all the operations in the status `PENDING`.
