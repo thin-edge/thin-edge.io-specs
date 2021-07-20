@@ -85,10 +85,10 @@ sequenceDiagram
         
     alt software update successful
         SM Agent ->> C8Y Mapper: Operation status SUCCESSFUL + current SoftwareList
-        C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
-        alt Sending c8y_SoftwareList successful
+        alt the size of software list is small enough
+            C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
             C8Y Mapper ->> C8Y Cloud: SmartREST 503: Update operation status to SUCCESSFUL
-        else 
+        else the size of software list is above the threshold 
             C8Y Mapper ->> C8Y Cloud: SmartREST 502: Update operation status to FAILED
         end
     else software update failed

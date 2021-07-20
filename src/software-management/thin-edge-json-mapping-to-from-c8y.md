@@ -51,11 +51,11 @@ The Thin Edge JSON message comes on the topic `tedge/commands/res/software/list`
 ```json
 {
     "id": 123,
-    "status": "SUCCESSFUL",
-    "list": [
+    "status": "successful",
+    "currentSoftwareList": [
         {
             "type": "debian",
-            "list": [
+            "modules": [
                 {
                     "name": "nodered",
                     "version": "1.0.0"
@@ -68,7 +68,7 @@ The Thin Edge JSON message comes on the topic `tedge/commands/res/software/list`
         },
         {
             "type": "docker",
-            "list": [
+            "modules": [
                 {
                     "name": "nginx",
                     "version": "1.21.0"
@@ -210,7 +210,7 @@ The Thin Edge JSON message comes onto the topic `tedge/commands/res/software/upd
 ```json
 {
     "id": 123,
-    "status": "SUCCESSFUL",
+    "status": "successful",
     "currentSoftwareList": [
         {
             "type": "debian",
@@ -260,7 +260,7 @@ The Thin Edge JSON message comes on the topic `tedge/commands/res/software/updat
 ```json
 {
     "id": 123,
-    "status":"FAILED",
+    "status":"failed",
     "reason":"Partial failure: Couldn't install collectd and nginx",
     "currentSoftwareList": [
         {
