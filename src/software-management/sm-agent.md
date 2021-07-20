@@ -200,11 +200,11 @@ Payload format:
 ```json
 {
     "id": 123,
-    "status": "SUCCESSFUL",
-    "list": [
+    "status": "successful",
+    "currentSoftwareList": [
         {
             "type": "debian",
-            "list": [
+            "modules": [
                 {
                     "name": "nodered",
                     "version": "1.0.0",
@@ -217,7 +217,7 @@ Payload format:
         },
         {
             "type": "docker",
-            "list": [
+            "modules": [
                 {
                     "name": "nginx",
                     "version": "1.21.0",
@@ -249,7 +249,7 @@ If fetching the software list had failed, the reponse would have indicated a fai
 ```json
 {
     "id": 123,
-    "status": "FAILED",
+    "status": "failed",
     "reason": "Request timed-out"
 }
 ```
@@ -312,7 +312,7 @@ Topic to subscribe for the software update response: `tedge/commands/res/softwar
 ```json
 {
     "id": 123,
-    "status": "EXECUTING"
+    "status": "executing"
 }
 ```
 
@@ -321,7 +321,7 @@ Topic to subscribe for the software update response: `tedge/commands/res/softwar
 ```json
 {
     "id": 123,
-    "status": "SUCCESSFUL",
+    "status": "successful",
     "currentSoftwareList": [
         {
             "type": "debian",
@@ -360,7 +360,7 @@ Sending the current software list along with the status will help the cloud prov
 ```json
 {
     "id": 123,
-    "status":"FAILED",
+    "status":"failed",
     "reason":"Partial failure: Couldn't install collectd and nginx",
     "currentSoftwareList": [
         {
