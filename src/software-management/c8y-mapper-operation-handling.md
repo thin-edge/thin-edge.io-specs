@@ -21,10 +21,8 @@ sequenceDiagram
       C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
     end
 
-    SM Agent ->> C8Y Mapper: Declare SoftwareUpdate capability
-    SM Agent ->> C8Y Mapper: Declare SoftwareList capability
-    C8Y Mapper ->> C8Y Mapper: Collect all device's capabilities
-    C8Y Mapper ->> C8Y Cloud: SmartREST 114: Send c8y_SoftwareUpdate (or more) as SupportedOperations
+    SM Agent ->> C8Y Mapper: Declare SoftwareUpdate and SoftwareList capability
+    C8Y Mapper ->> C8Y Cloud: SmartREST 114: Send c8y_SoftwareUpdate as SupportedOperations
     
     alt If receiving both SoftwareUpdate and SoftwareList capabilities
       C8Y Mapper ->> SM Agent: Software List Request
