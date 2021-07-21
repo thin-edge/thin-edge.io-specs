@@ -47,7 +47,7 @@ This flow is consists of 4 parts.
 1. Report operation failed to C8Y Cloud.
 2. Receive device capabilities from SM Agent and translate as `C8Y_SupportedOperatons` and report them to C8Y Cloud.
 3. Trigger a Set Software List request to SM Agent as a response of receiving Software List capability. 
-4. Trigger a Get Software Update request to C8Y Cloud as a response of receiving Software Update capability.
+4. Trigger a Get PENDING operations request to C8Y Cloud as a response of receiving Software Update capability.
 
 Both "SM Agent is up but C8Y Mapper is down" and "SM Agent is down but C8Y Mapper is up" cases must be considered here.
 Namely, the device capabilities must be delivered to C8Y Mapper in any case.
