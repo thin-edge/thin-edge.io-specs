@@ -56,7 +56,7 @@ Name | "SM agent"
 --- | --- 
 **Purpose** | The SM agent is the core component in thin-edge that manages the Software Management functionality.
 **Sequence** | (1) On incoming update request from the SM mapper the prepare command is sent to all Package Manager Plugins.
-&nbsp;| (2) The SM agent splits sw-list into separate lists per package-type (e.g. "sw-list_pktType1", "sw-list_pktType2", ...).
+&nbsp;| (2) The SM agent splits sw-list into separate lists per package-type (e.g. "sw-list_pkgType1", "sw-list_pkgType2", ...).
 &nbsp;| (3) The command exec-list is sent with list "sw-list_pktType1" as argument to the Package Manager Plugin for package-type 1. That command allows the plugin to handle the whole list in one command. On the other side the plugin is free to just return \<not-implemeneted\> and instead use a 2nd option provided by agent. The 2nd Option feeds plugin package-by-package, that is more simple but less flexible. Therefore follow next step below.
 &nbsp;| (4) If exec-list has return \<not-implemeneted\> agent iterates over "sw-list_pktType1". For each particular package the command ("install" or "remove") is send to responsible Package Manager Plugin. The according "command" is determined based on information that is part of the sw-list for each package.
 &nbsp;| Same steps (3 and 4 from above) will be executed for each splitted list "sw-list_pktType\<i\>" and according Package Manager Plugin.
