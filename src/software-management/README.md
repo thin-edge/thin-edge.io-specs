@@ -45,7 +45,7 @@ UC1: | "Report SW List"
   
 UC2: | "Update SW List"
 --- | --- 
-**Purpose** | Installing or removing SW package on the device.
+**Purpose** | Installing or removing one or more SW packages on the device.
 **Trigger** | Request coming from cloud.
 &nbsp;| Detailed spec for that use-case is here: [src/software-management/usecase-update-swlist.md](/src/software-management/usecase-update-swlist.md)
 
