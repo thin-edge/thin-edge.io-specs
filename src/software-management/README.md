@@ -10,7 +10,7 @@ The diagram below indentifies all relevant use-cases for thin-edge. Thereby each
 
 Some further explanation about diagrams elements it's interpretation could be found below the diagram.
 
-![Use Case Diagram](/src/software-management/use-cases-sw-management.png)
+![Use Case Diagram](/src/software-management/use-cases-sw-management.svg)
 
 
 Actors
