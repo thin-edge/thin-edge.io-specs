@@ -58,7 +58,7 @@ UC2: | "Update SW List"
  
 UC3: | "Sync SW List"
 --- | --- 
-**Purpose** | Sync Software List of Cumulocity. In Cumulocity it has been replaced with the "Update Software".<br/> For now that use-case it out of scope for thin-edge.<br/> See also "Cumulocity Use Case: Sync Software List" in archbee: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/UuDcppPEYlD9alaF7y_e7
+**Purpose** | Sync Software List of Cumulocity. In Cumulocity it has been deprecated in favour of "Update Software".<br/> For now that use-case is out of scope for thin-edge.<br/> See also "Cumulocity Use Case: Sync Software List" in archbee: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/UuDcppPEYlD9alaF7y_e7
 **Trigger** | 
 
 &nbsp;
