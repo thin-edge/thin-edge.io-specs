@@ -37,7 +37,7 @@ Name | "Cloud"
 &nbsp;
 &nbsp;
   
-Name | "SM mapper" 
+Name | "Cloud mapper" 
 --- | --- 
 **Purpose** | The SM mapper abstracts the specific Cloud to the SM agent. For each Cloud a specific "SM-mapper" might required to be implemented. In that spec the SM mapper for Cumulocity is outlined.
 **Sequence** | (1) When the SM mapper receives an update request from Cloud it forwards the request to the SM agent. If the sw-list contained in the Cloud request does not match the SM agent's interface translation has to be done by the SM mapper.
