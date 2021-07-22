@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="software-management/index.html"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="software-management/plugin-api.html"><strong aria-hidden="true">2.1.</strong> Package Manager Plugin API</a></li></ol></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="software-management/index.html"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="software-management/plugin-api.html"><strong aria-hidden="true">2.1.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">2.2.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">2.3.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -524,6 +524,393 @@ If the plugin manage concurrent versions, the module <code>foo</code> might stil
 </ul>
 </li>
 </ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="c8y-mapper-operation-handling"><a class="header" href="#c8y-mapper-operation-handling">C8Y Mapper Operation Handling</a></h1>
+<p><em>!!ATTENTION!! We support only <code>c8y_SoftwareUpdate</code> in the release <code>0.3</code>. 
+Ignore <code>c8y_DeviceProfile</code> for now.</em></p>
+<p>In this page, we focus on the contract between C8Y Mapper and C8Y Cloud. 
+If you want to know the mapping rules, 
+please refer to <a href="software-management/./thin-edge-json-mapping-to-from-c8y.html">Thin Edge JSON Mapping to/from C8Y</a>.</p>
+<h2 id="flow-at-sm-agent-startup"><a class="header" href="#flow-at-sm-agent-startup">Flow at SM Agent Startup</a></h2>
+<pre class="mermaid">sequenceDiagram
+    participant SM Agent
+    participant C8Y Mapper
+    participant C8Y Cloud
+
+    alt If SM Agent reports failure of last SoftwareUpdateOperation on a startup
+      SM Agent -&gt;&gt; C8Y Mapper: Operation status FAILED + current SoftwareList
+      C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 502: Update operation status to FAILED
+      C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
+    end
+
+    SM Agent -&gt;&gt; C8Y Mapper: Declare SoftwareUpdate and SoftwareList capability
+    C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 114: Send c8y_SoftwareUpdate as SupportedOperations
+    
+    alt If receiving both SoftwareUpdate and SoftwareList capabilities
+      C8Y Mapper -&gt;&gt; SM Agent: Software List Request
+      SM Agent --&gt;&gt; C8Y Mapper: Software List
+      C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
+      
+      C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 500: Get PENDING operations
+      C8Y Cloud --&gt;&gt; C8Y Mapper: SmartREST 528: SoftwareUpdate operation and others
+      Note right of C8Y Mapper: the following flow is the same as the flow in runtime
+    end
+</pre>
+<table><thead><tr><th>ID</th><th>Description</th><th>Example Payload</th><th>Type</th></tr></thead><tbody>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name502set-operation-to-failed-502a">502</a></td><td>Set operation to FAILED</td><td><code>502,c8y_SoftwareUpdate,&quot;Permission denied&quot;</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name116set-software-list-116a">116</a></td><td>Set software list</td><td><code>116,software1,version1,url1,software2,version2,url2</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name114set-supported-operations-114a">114</a></td><td>Set supported operations</td><td><code>114,c8y_SoftwareUpdate</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name500get-pending-operations-500a">500</a></td><td>Get PENDING operations</td><td><code>500</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name528update-software-528a">528</a></td><td>Update Software</td><td><code>528,external_id,software1,version1,url1,install,software2,version2,url2,delete</code></td><td>Subscribe</td></tr>
+</tbody></table>
+<p>This flow is consists of 4 parts.</p>
+<ol>
+<li>Report operation failed to C8Y Cloud.</li>
+<li>Receive device capabilities from SM Agent and translate as <code>C8Y_SupportedOperatons</code> and report them to C8Y Cloud.</li>
+<li>Trigger a Set Software List request to SM Agent as a response of receiving Software List capability. </li>
+<li>Trigger a Get PENDING operations request to C8Y Cloud as a response of receiving Software Update capability.</li>
+</ol>
+<p>Both &quot;SM Agent is up but C8Y Mapper is down&quot; and &quot;SM Agent is down but C8Y Mapper is up&quot; cases must be considered here.
+Namely, the device capabilities must be delivered to C8Y Mapper in any case.</p>
+<p>Other notes:</p>
+<ul>
+<li>Collecting all device's capabilities (e.g. SoftwareUpdate, Restart, etc.) are required 
+so that the mapper sends SmartREST <code>114</code> with all necessary supported operations.</li>
+<li>SM Agent might publish more capabilities than C8Y cloud supports. 
+In this case, the mapper doesn't need to subscribe the unsupported capability topics.</li>
+<li><code>c8y_SoftwareUpdate</code> is supported in c8y version 10.7 and onwards.</li>
+<li>C8Y mapper can consider that the SM Agent is ready for a new operation 
+after the agent publishes device's capabilities.</li>
+<li>SmartREST <code>500</code> returns all the operations in the status <code>PENDING</code>.</li>
+<li>SmartREST <code>500</code> may return not only <code>528</code>.</li>
+</ul>
+<h2 id="flow-in-runtime-phase-for-c8y_softwareupdate-operation"><a class="header" href="#flow-in-runtime-phase-for-c8y_softwareupdate-operation">Flow in runtime phase for <code>c8y_SoftwareUpdate</code> operation</a></h2>
+<pre class="mermaid">sequenceDiagram
+    participant SM Agent
+    participant C8Y Mapper
+    participant C8Y Cloud
+    
+    C8Y Cloud -&gt;&gt; C8Y Mapper: SmartREST 528: SoftwareUpdate operation and others
+    C8Y Mapper -&gt;&gt; C8Y Mapper: Put operations to FIFO queue
+    C8Y Mapper -&gt;&gt; C8Y Mapper: Wait until the SM Agent completes processing the last SoftwareUpdate operation(if any)
+    C8Y Mapper -&gt;&gt; C8Y Mapper: Pick up the oldest c8y_SoftwareUpdate operation
+
+    C8Y Mapper -&gt;&gt; SM Agent: Software Update Request
+    
+    SM Agent -&gt;&gt; C8Y Mapper: Operation status EXECUTING
+    C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 501: Update operation status to EXECUTING
+        
+    alt software update successful
+        SM Agent -&gt;&gt; C8Y Mapper: Operation status SUCCESSFUL + current SoftwareList
+        alt the size of software list is small enough
+            C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
+            C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 503: Update operation status to SUCCESSFUL
+        else the size of software list is above the threshold 
+            C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 502: Update operation status to FAILED
+        end
+    else software update failed
+        SM Agent -&gt;&gt; C8Y Mapper: Operation status FAILED + current SoftwareList
+        C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
+        C8Y Mapper -&gt;&gt; C8Y Cloud: SmartREST 502: Update operation status to FAILED
+    end
+</pre>
+<table><thead><tr><th>ID</th><th>Description</th><th>Example Payload</th><th>Type</th></tr></thead><tbody>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name528update-software-528a">528</a></td><td>Update Software</td><td><code>528,external_id,software1,version1,url1,install,software2,version2,url2,delete</code></td><td>Subscribe</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name501set-operation-to-executing-501a">501</a></td><td>Set operation to EXECUTING</td><td><code>501,c8y_SoftwareUpdate</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name116set-software-list-116a">116</a></td><td>Set software list</td><td><code>116,software1,version1,url1,software2,version2,url2</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name503set-operation-to-successful-503a">503</a></td><td>Set operation to SUCCESSFUL</td><td><code>503,c8y_SoftwareUpdate</code></td><td>Publish</td></tr>
+<tr><td><a href="https://cumulocity.com/guides/device-sdk/mqtt/#a-name502set-operation-to-failed-502a">502</a></td><td>Set operation to FAILED</td><td><code>502,c8y_SoftwareUpdate,&quot;Permission denied&quot;</code></td><td>Publish</td></tr>
+</tbody></table>
+<p>Note:</p>
+<ul>
+<li>C8Y cloud might publish <code>c8y_SoftwareUpdate</code>(<code>528</code>) and also other operations.</li>
+<li>The mapper has responsibility to keep all received PENDING operations in FIFO queue.</li>
+<li>The mapper considers that SM Agent is ready for receiving a new operation 
+either <strong>when it receives Operation status SUCCESSFUL/FAILED + current SoftwareList</strong> 
+or <strong>when it receives device capability (at agent startup only)</strong>.</li>
+<li>SM Agent can process only one Software Update operation at one time. 
+Therefore, c8y Mapper should pick up the oldest c8y_SoftwareUpdate operation.</li>
+<li>C8Y UI blocks to create more than one <code>c8y_SoftwareUpdate</code> operation at the same time. 
+However, still user can create more than one operation from REST API.</li>
+<li>If one operation includes a couple of packages updates, and if one of those package failed, 
+we have to send <code>FAILED</code>.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="mapping-tofrom-c8y"><a class="header" href="#mapping-tofrom-c8y">Mapping to/from C8Y</a></h1>
+<h2 id="device-capabilities"><a class="header" href="#device-capabilities">Device Capabilities</a></h2>
+<h3 id="interpret-device-capabilities-to-smartrest-set-supported-operations-114"><a class="header" href="#interpret-device-capabilities-to-smartrest-set-supported-operations-114">Interpret Device Capabilities to SmartREST Set Supported Operations (114)</a></h3>
+<p>Device capabilities are reported as empty messages published to dedicated topics.</p>
+<table><thead><tr><th>Name in Thin Edge</th><th>Topic</th><th>C8Y Name</th></tr></thead><tbody>
+<tr><td>Software Update</td><td>tedge/capabilities/software/update</td><td>c8y_SoftwareUpdate</td></tr>
+<tr><td>Software List</td><td>tedge/capabilities/software/list</td><td>unused</td></tr>
+<tr><td>Software Sync</td><td>tedge/capabilities/software/sync</td><td>unused</td></tr>
+</tbody></table>
+<p>C8Y Mapper needs to report only <code>c8y_SoftwareUpdate</code> from this table,
+therefore, the mapper needs to subscribe only <code>tedge/capabilities/software/update</code>.
+If the mapper observed that an empty payload message is published, the mapper</p>
+<ol>
+<li>publishes an empty payload message to <code>tedge/capabilities/software/update</code> to clear the retained message.</li>
+<li>publishes SmartREST(114) to <code>c8y/s/us</code> as follwing.</li>
+</ol>
+<pre><code>114,c8y_SoftwareUpdate
+</code></pre>
+<p><em><strong>Future Extension:</strong></em><br />
+If C8Y Mapper supports more than <code>c8y_SoftwareUpdate</code> operation (e.g. <code>c8y_Restart</code>),
+the mapper should subscribe more capabilities topics,
+and sends corresponded C8Y SupportedOpeation types with one <code>114</code> message.</p>
+<h2 id="software-list-operation"><a class="header" href="#software-list-operation">Software List Operation</a></h2>
+<h3 id="send-thin-edge-json-software-list-request"><a class="header" href="#send-thin-edge-json-software-list-request">Send Thin Edge JSON Software List Request</a></h3>
+<p>Outgoing on the topic <code>tedge/commands/req/software/list</code> to SM Agent.</p>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123
+}
+</code></pre>
+<p>The mapper must generate a unique ID.
+Refer to <a href="software-management/../sm-agent.html">SM Agent specification</a> for more details.</p>
+<h3 id="translate-from-thin-edge-json-software-list-response-to-smartrest-set-software-list-116"><a class="header" href="#translate-from-thin-edge-json-software-list-response-to-smartrest-set-software-list-116">Translate from Thin Edge JSON Software List Response to SmartREST Set Software List (116)</a></h3>
+<p>The Thin Edge JSON message comes on the topic <code>tedge/commands/res/software/list</code> from SM Agent.</p>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123,
+    &quot;status&quot;: &quot;successful&quot;,
+    &quot;currentSoftwareList&quot;: [
+        {
+            &quot;type&quot;: &quot;debian&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nodered&quot;,
+                    &quot;version&quot;: &quot;1.0.0&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;collectd&quot;,
+                    &quot;version&quot;: &quot;5.7&quot;
+                }
+            ]
+        },
+        {
+            &quot;type&quot;: &quot;docker&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nginx&quot;,
+                    &quot;version&quot;: &quot;1.21.0&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;mongodb&quot;,
+                    &quot;version&quot;: &quot;4.4.6&quot;
+                }
+            ]
+        }
+    ]
+}
+</code></pre>
+<p>The mapper translates the Thin Edge JSON message to SmartREST (116) format. </p>
+<p>We set rules how to represent <code>type</code> in C8Y Cloud
+since C8Y doesn't have <code>type</code> field in <code>c8y_SoftwareList</code> structure.</p>
+<ul>
+<li>The mapper adds <code>type</code> as a suffix of a package <strong>version</strong> after <code>::</code> (double-colon) 
+if provided. If a version contains <code>::</code>, the mapper adds <code>::</code> at the end of version 
+even the <code>type</code> is default.
+<ul>
+<li>Example 1: if the package type is <code>debian</code>, and the version is <code>1.0.0</code>,
+the version that the mapper reports is <code>1.0.0::debian</code>.</li>
+<li>Example 2: if the package type is blank (meaning the agent uses the &quot;default&quot; type),
+and the version is <code>1.0.0</code>, the version that the mapper reports is <code>1.0.0</code>.</li>
+<li>Example 3: if the package type is <code>debian</code>, 
+and the version is <code>1.0.0::1</code> (containing <code>::</code> delimiter as a package version),
+the version that mapper reports is <code>1.0.0::1::debian</code>.</li>
+<li>Example 4 (corner case): if the package type is blank,
+and the version is <code>1.0.0::1</code> (containing <code>::</code> delimiter as a package version),
+the version that mapper reports is <code>1.0.0::1::</code>.</li>
+</ul>
+</li>
+<li>Keep URL fields blank.</li>
+</ul>
+<p>The SmartREST(116) message goes out on the topic <code>c8y/s/us</code> to Mosquitto bridge.</p>
+<pre><code>116,nodered,1.0.0::debian,,collectd,5.7::debian,,nginx,1.21.0::docker,,mongodb,4.4.6::docker,
+</code></pre>
+<h2 id="software-update-operation"><a class="header" href="#software-update-operation">Software Update Operation</a></h2>
+<h3 id="send-smartrest-500-get-pending-operations"><a class="header" href="#send-smartrest-500-get-pending-operations">Send SmartREST 500 Get PENDING operations</a></h3>
+<p>The SmartREST 500 message goes out on the topic <code>c8y/s/us</code> to Mosquitto bridge.</p>
+<pre><code>500
+</code></pre>
+<p>Then, the mapper will receive PENDING operations if they exist.</p>
+<h3 id="translate-from-smartrest-software-update-operation-528-to-thin-edge-json-software-update-request"><a class="header" href="#translate-from-smartrest-software-update-operation-528-to-thin-edge-json-software-update-request">Translate from SmartREST Software Update Operation (528) to Thin Edge JSON Software Update Request</a></h3>
+<p>The SmartREST <code>528</code> message comes onto the topic <code>c8y/s/ds</code> from C8Y Cloud.</p>
+<pre><code>528,external_id,nodered,1.0.0::debian, ,install,collectd,5.7::debian,https://collectd.org/download/collectd-tarballs/collectd-5.12.0.tar.bz2,install,nginx,1.21.0::docker, ,install,mongodb,4.4.6::docker,,delete
+</code></pre>
+<p>There are rules how to convert from SmartREST to ThinEdgeJSON.</p>
+<ol>
+<li>Mapper gets <code>type</code> from the version. 
+Check where is the last <code>::</code> (double-colon) and assume that the keyword after the last <code>::</code> is the type.
+<ul>
+<li>If nothing follows after the last <code>::</code>, the mapper considers the <code>type</code> is &quot;default&quot;.
+e.g. <code>1.0.0::1::</code></li>
+</ul>
+</li>
+<li>If no <code>::</code> is provided in a version, the mapper considers the <code>type</code> is &quot;default&quot;.
+Namely, leave the value of <code>type</code> blank.</li>
+<li>If the <code>URL</code> field is empty or a &quot; &quot; (space), mapper considers that the package should be installed from the standard repository.</li>
+</ol>
+<p>Then, the translated Thin Edge JSON goes on the topic <code>tedge/inbound/software/update</code> to SM Agent.</p>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123,
+    &quot;updateList&quot;: [
+        {
+            &quot;type&quot;: &quot;debian&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nodered&quot;,
+                    &quot;version&quot;: &quot;1.0.0&quot;,
+                    &quot;action&quot;: &quot;install&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;collectd&quot;,
+                    &quot;version&quot;: &quot;5.7&quot;,
+                    &quot;url&quot;: &quot;https://collectd.org/download/collectd-tarballs/collectd-5.12.0.tar.bz2&quot;,
+                    &quot;action&quot;: &quot;install&quot;
+                }
+            ]
+        },
+        {
+            &quot;type&quot;: &quot;docker&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nginx&quot;,
+                    &quot;version&quot;: &quot;1.21.0&quot;,
+                    &quot;action&quot;: &quot;install&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;mongodb&quot;,
+                    &quot;version&quot;: &quot;4.4.6&quot;,
+                    &quot;action&quot;: &quot;remove&quot;
+                }
+            ]
+        }
+    ]
+}
+</code></pre>
+<p><strong>Attention</strong>:</p>
+<ul>
+<li>Uninstallation terminologies are different in C8Y and Thin Edge JSON. C8Y uses <code>delete</code>, 
+although Thin Edge JSON uses <code>remove</code>.</li>
+</ul>
+<h3 id="translate-from-thin-edge-json-software-update-executing-to-smartrest-operation-update-executing-501"><a class="header" href="#translate-from-thin-edge-json-software-update-executing-to-smartrest-operation-update-executing-501">Translate from Thin Edge JSON Software Update Executing to SmartREST Operation Update EXECUTING (501)</a></h3>
+<p>Incoming to <code>tedge/commands/res/software/update</code> from SM Agent.</p>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123,
+    &quot;status&quot;: &quot;EXECUTING&quot;
+}
+</code></pre>
+<p>The mapper translates it and publishes on <code>c8y/s/us</code>.</p>
+<pre><code>501,c8y_SoftwareUpdate
+</code></pre>
+<h3 id="translate-from-thin-edge-json-software-list-response-successful-to-smartrest-set-software-list-116-and-operation-update-successful-503"><a class="header" href="#translate-from-thin-edge-json-software-list-response-successful-to-smartrest-set-software-list-116-and-operation-update-successful-503">Translate from Thin Edge JSON Software List Response (Successful) to SmartREST Set Software List (116) and Operation Update SUCCESSFUL (503)</a></h3>
+<p>The Thin Edge JSON message comes onto the topic <code>tedge/commands/res/software/update</code> from SM Agent.</p>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123,
+    &quot;status&quot;: &quot;successful&quot;,
+    &quot;currentSoftwareList&quot;: [
+        {
+            &quot;type&quot;: &quot;debian&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nodered&quot;,
+                    &quot;version&quot;: &quot;1.0.0&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;collectd&quot;,
+                    &quot;version&quot;: &quot;5.7&quot;
+                }
+            ]
+        },
+        {
+            &quot;type&quot;: &quot;docker&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nginx&quot;,
+                    &quot;version&quot;: &quot;1.21.0&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;mongodb&quot;,
+                    &quot;version&quot;: &quot;4.4.6&quot;
+                }
+            ]
+        }
+    ]
+}
+</code></pre>
+<p>The mapper translates it into two messages and publishes onto <code>c8y/s/us</code>.</p>
+<p>The first message is SmartREST <code>116</code>, that is <code>c8y_SoftwareList</code>.
+The translation rules are the same as described in 
+<a href="software-management/thin-edge-json-mapping-to-from-c8y.html#translate-from-thin-edge-json-software-list-response-to-smartrest-set-software-list-116">From Thin Edge JSON Software List Response to c8y_SoftwareList (116)</a>.</p>
+<p>The second message is operation update to <code>SUCCESSFUL</code>.</p>
+<pre><code>503,c8y_SoftwareUpdate
+</code></pre>
+<h3 id="translate-from-thin-edge-json-software-update-operation-failed-to-smartrest-set-software-list-116-and-operation-update-failed-502"><a class="header" href="#translate-from-thin-edge-json-software-update-operation-failed-to-smartrest-set-software-list-116-and-operation-update-failed-502">Translate from Thin Edge JSON Software Update Operation FAILED to SmartREST Set Software List (116) and Operation Update FAILED (502)</a></h3>
+<p>The Thin Edge JSON message comes on the topic <code>tedge/commands/res/software/update</code> from SM Agent.</p>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123,
+    &quot;status&quot;:&quot;failed&quot;,
+    &quot;reason&quot;:&quot;Partial failure: Couldn't install collectd and nginx&quot;,
+    &quot;currentSoftwareList&quot;: [
+        {
+            &quot;type&quot;: &quot;debian&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nodered&quot;,
+                    &quot;version&quot;: &quot;1.0.0&quot;
+                }
+            ]
+        },
+        {
+            &quot;type&quot;: &quot;docker&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;nginx&quot;,
+                    &quot;version&quot;: &quot;1.21.0&quot;
+                }
+            ]
+        }
+    ],
+    &quot;failures&quot;:[
+        {
+            &quot;type&quot;:&quot;debian&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;:&quot;collectd&quot;,
+                    &quot;version&quot;:&quot;5.7&quot;,
+                    &quot;action&quot;:&quot;install&quot;,
+                    &quot;reason&quot;:&quot;Network timeout&quot;
+                }
+            ]
+        },
+        {
+            &quot;type&quot;:&quot;docker&quot;,
+            &quot;modules&quot;: [
+                {
+                    &quot;name&quot;: &quot;mongodb&quot;,
+                    &quot;version&quot;: &quot;4.4.6&quot;,
+                    &quot;action&quot;:&quot;remove&quot;,
+                    &quot;reason&quot;:&quot;Other components dependent on it&quot;
+                }
+            ]
+        }
+    ]
+}
+</code></pre>
+<p>The mapper translates the Thin Edge JSON to SmartREST <code>116</code> and <code>502</code> then publishes them to <code>c8y/s/us</code>.</p>
+<p>The first message is SmartREST <code>116</code>, that is <code>c8y_SoftwareList</code>.
+The translation rules are the same as described in 
+<a href="software-management/thin-edge-json-mapping-to-from-c8y.html#translate-from-thin-edge-json-software-list-response-to-smartrest-set-software-list-116">From Thin Edge JSON Software List Response to c8y_SoftwareList (116)</a>.</p>
+<p>The second message is operation update to <code>FAILED</code> with a following rule.</p>
+<ul>
+<li>Use the only parent field <code>reason</code> as a failure reason to report.</li>
+</ul>
+<pre><code>502,c8y_SoftwareUpdate,&quot;Partial failure: Couldn't install collectd and nginx&quot;
+</code></pre>
+<h3 id="send-smartrest-operation-update-failed-502-only-if-sending-softwarelist-116-failed"><a class="header" href="#send-smartrest-operation-update-failed-502-only-if-sending-softwarelist-116-failed">Send SmartREST Operation Update FAILED (502) only if sending SoftwareList (116) failed</a></h3>
+<p>It's possible that sending <code>c8y_SoftwareList</code> (116) fails due to the huge payload size.
+In this case, the mapper should send only operation <code>FAILED</code> to C8Y cloud.</p>
+<p>Topic to publish: <code>c8y/s/us</code>,</p>
+<pre><code>502,c8y_SoftwareUpdate,&quot;Failed to send the current software list after software update operation&quot;
+</code></pre>
 
                     </main>
 
