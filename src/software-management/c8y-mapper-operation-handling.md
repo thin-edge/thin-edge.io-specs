@@ -16,7 +16,7 @@ sequenceDiagram
     participant C8Y Cloud
 
     alt If SM Agent reports failure of last SoftwareUpdateOperation on a startup
-      SM Agent ->> C8Y Mapper: SoftwareUpdate Operation FAILED
+      SM Agent ->> C8Y Mapper: Operation status FAILED + current SoftwareList
       C8Y Mapper ->> C8Y Cloud: SmartREST 502: Update operation status to FAILED
       C8Y Mapper ->> C8Y Cloud: SmartREST 116: Send current c8y_SoftwareList
     end
