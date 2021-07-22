@@ -7,4 +7,5 @@
 
 ## Software management
 - [Software management](software-management/README.md)
+    - [Use-Case Update Software-List](software-management/usecase-update-swlist.md )
     - [Package Manager Plugin API](software-management/plugin-api.md)
