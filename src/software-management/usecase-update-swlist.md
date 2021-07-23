@@ -16,7 +16,7 @@ sub-specifications.
 Further explanations about diagram's elements or it's interpretation could be found below the diagram.
 
 
-![Sequence Diagram Update SW-list](/src/software-management/uc-update-swlist.png)
+![Sequence Diagram Update SW-list](images/uc-update-swlist.svg)
 
 Components
 ==========
