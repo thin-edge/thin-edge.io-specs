@@ -139,7 +139,7 @@ There are rules how to convert from SmartREST to ThinEdgeJSON.
 3. If the `URL` field is empty or a " " (space), mapper considers that the package should be installed from the standard repository.
 
 
-Then, the translated Thin Edge JSON goes on the topic `tedge/inbound/software/update` to SM Agent.
+Then, the translated Thin Edge JSON goes on the topic `tedge/commands/req/software/update` to SM Agent.
 
 ```json
 {
