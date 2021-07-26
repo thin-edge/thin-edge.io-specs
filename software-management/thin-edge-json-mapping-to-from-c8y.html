@@ -257,7 +257,7 @@ e.g. <code>1.0.0::1::</code></li>
 Namely, leave the value of <code>type</code> blank.</li>
 <li>If the <code>URL</code> field is empty or a &quot; &quot; (space), mapper considers that the package should be installed from the standard repository.</li>
 </ol>
-<p>Then, the translated Thin Edge JSON goes on the topic <code>tedge/inbound/software/update</code> to SM Agent.</p>
+<p>Then, the translated Thin Edge JSON goes on the topic <code>tedge/commands/req/software/update</code> to SM Agent.</p>
 <pre><code class="language-json">{
     &quot;id&quot;: 123,
     &quot;updateList&quot;: [
