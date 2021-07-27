@@ -119,7 +119,7 @@ Ignoring is okay as the SM Agent expects to retrieve it later on, after the curr
 The mapper can choose to persist such PENDING requests on its own if the cloud that it supports doesn't support such queueing.
 But, the SM Agent won't persist such requests.
 
-While processing the software update list, the module are installed/uninstalled in the order that they were received from the cloud.
+While processing the software update list, the modules are installed/uninstalled in the order that they were received from the cloud.
 
 While installing/uinstalling the modules one by one, we have the option to either fail-fast as soon as one installation/uninstallation fails or keep track of the failures and continue installing/uninstalling the rest of the software modules.
 Fail-fast would be a better choice as in the case of a failure, the user is more likely to retry that operation after making any changes to the original software update list that he prepared.
