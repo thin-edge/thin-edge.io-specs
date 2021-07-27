@@ -4,7 +4,7 @@ The software management agent (referred to as `SM Agent` in the rest of this doc
 It primarily interacts with a `Cloud Mapper` and one or more `Software Plugins` backed by a software package manager (apt, snap, docker etc).
 
 The `Cloud Mapper` is the process that's responsible for discovering the capabilities of the device and reporting that to the cloud, cloud message mapping as well as any other cloud-specific processing logic.
-The cloud mapper's behaviour handling of software management requests/response are describe in detail here[../c8y-mapper-operation-handling.md]
+The cloud mapper's behaviour handling of software management requests/response are describe in detail here [c8y-mapper-operation-handling.md](./c8y-mapper-operation-handling.md)
 
 The `Software Plugin` handles the installation/removal of software modules with the help of package manager, when called by the `SM Agent`.
 The software plugin specification is captured in detail here[../plugin-api.md]
