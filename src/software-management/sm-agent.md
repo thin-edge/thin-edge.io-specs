@@ -7,7 +7,7 @@ The `Cloud Mapper` is the process that's responsible for discovering the capabil
 The cloud mapper's behaviour handling of software management requests/response are describe in detail here [c8y-mapper-operation-handling.md](./c8y-mapper-operation-handling.md)
 
 The `Software Plugin` handles the installation/removal of software modules with the help of package manager, when called by the `SM Agent`.
-The software plugin specification is captured in detail here[../plugin-api.md]
+The software plugin specification is captured in detail here [./plugin-api.md](./plugin-api.md)
 # SM Agent Startup
 
 The sequence of operations and message exchanges happening on every startup of the sm-agent (initial startup on `tedge connect`, service restart, device restarts etc).
