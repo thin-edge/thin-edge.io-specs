@@ -119,7 +119,9 @@ Ignoring is okay as the SM Agent expects to retrieve it later on, after the curr
 The mapper can choose to persist such PENDING requests on its own if the cloud that it supports doesn't support such queueing.
 But, the SM Agent won't persist such requests.
 
-While processing the software update list, the modules are installed/uninstalled in the order that they were received from the cloud.
+While processing the software update list, the modules are installed/uninstalled in the order that they were received from the cloud. However the SW update operation is a "declarative" operation by definition, so there is no intentional order from the Cloud operator. Instead the SM agent can define an order that fits best so that the intended package amount defined by the sw-list will be achieved.
+
+NOTE for Furture extension: If the order need to be decided by a specific Package Manager (e.g. to consider/fix dependencies between packages in the sw-list) the Package Manager plugin should be able to be feeded with all packages of according type at once, instead of package by package. Therefore the Package Manager Plugin API will be extended with another command (proposed name "exec-list") later.
 
 While installing/uinstalling the modules one by one, we have the option to either fail-fast as soon as one installation/uninstallation fails or keep track of the failures and continue installing/uninstalling the rest of the software modules.
 Fail-fast would be a better choice as in the case of a failure, the user is more likely to retry that operation after making any changes to the original software update list that he prepared.
