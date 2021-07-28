@@ -355,7 +355,7 @@ Topic to subscribe for the software update response: `tedge/commands/res/softwar
 }
 ```
 
-Sending the current software list along with the status will help the cloud providers to show the most up-to-date software list after an update was performed, which would include any extra depepndencies that got installed/removed as part of the update.
+Sending the current software list along with the status will help the cloud providers to show the most up-to-date software list after an update was performed, which would include any extra dependencies that got installed/removed as part of the update.
 
 #### Failed Status Payload
 
