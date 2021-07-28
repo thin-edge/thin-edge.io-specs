@@ -1,5 +1,7 @@
 # Thin Edge Specifications
 
+View the specification with rendered mermaid diagram from [here](https://thin-edge.github.io/thin-edge.io-specs/) powered by GitHub Pages.
+
 View the specifications online from [here](./src/SUMMARY.md)
 
 # How to generate the documentation locally

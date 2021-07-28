@@ -9,3 +9,5 @@
 - [Software management](software-management/README.md)
     - [Package Manager Plugin API](software-management/plugin-api.md)
     - [Software Management Agent](software-management/sm-agent.md)
+    - [C8Y Mapper Operation Handling](software-management/c8y-mapper-operation-handling.md)
+    - [Thin Edge JSON Mapping to/from C8Y](software-management/thin-edge-json-mapping-to-from-c8y.md)
