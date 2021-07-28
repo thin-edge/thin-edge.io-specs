@@ -73,7 +73,7 @@ sequenceDiagram
     participant SM Agent
     participant Cloud Mapper
 
-    loop if a SoftwareUpdateOperation is PENDING
+    alt if a SoftwareUpdateOperation is PENDING
         Cloud Mapper-->>SM Agent: SoftwareUpdateOperation
 
         SM Agent->>SM Agent: Persist SoftwareUpdateOperation in-progress
