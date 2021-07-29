@@ -23,12 +23,12 @@ Components
 
 Name | "Cloud" 
 --- | --- 
-**Purpose** | The cloud triggers the "update swlist" operation, and finally receives it's result. The trigger request contains the sw-list to the SM mapper on the device.
-**Sequence** | (1) The Cloud sends a request to start an update to the SM mapper on the device. The request contains the sw-list.
-&nbsp;| (2) The cloud gets feedback from SM mapper (status "executing") when update was started.
-&nbsp;| (3) The cloud gets feedback from SM mapper (status "successful") when update was sucessfully processed.
+**Purpose** | The cloud triggers the "update swlist" operation, and finally receives it's result. The trigger request contains the sw-list to the Cloud mapper on the device.
+**Sequence** | (1) The Cloud sends a request to start an update to the Cloud mapper on the device. The request contains the sw-list.
+&nbsp;| (2) The cloud gets feedback from Cloud mapper (status "executing") when update was started.
+&nbsp;| (3) The cloud gets feedback from Cloud mapper (status "successful") when update was sucessfully processed.
 &nbsp;|&nbsp;
-**Further Spec**| Spec about details of interface between Cloud and SM Mapper is under construction. See [Ticket CIT-439](https://cumulocity.atlassian.net/browse/CIT-439)
+**Further Spec**| Spec about details of interface between Cloud and Cloud Mapper is under construction. See [Ticket CIT-439](https://cumulocity.atlassian.net/browse/CIT-439)
 
 &nbsp;
 &nbsp;
@@ -39,11 +39,11 @@ Name | "Cloud"
   
 Name | "Cloud mapper" 
 --- | --- 
-**Purpose** | The SM mapper abstracts the specific Cloud to the SM agent. For each Cloud a specific "SM-mapper" might required to be implemented. In that spec the SM mapper for Cumulocity is outlined.
-**Sequence** | (1) When the SM mapper receives an update request from Cloud it forwards the request to the SM agent. If the sw-list contained in the Cloud request does not match the SM agent's interface translation has to be done by the SM mapper.
+**Purpose** | The Cloud mapper abstracts the specific Cloud to the SM agent. For each Cloud a specific "Cloud-mapper" might required to be implemented. In that spec the Cloud mapper for Cumulocity is outlined.
+**Sequence** | (1) When the Cloud mapper receives an update request from Cloud it forwards the request to the SM agent. If the sw-list contained in the Cloud request does not match the SM agent's interface translation has to be done by the Cloud mapper.
 &nbsp;| (2) SM agent sends feedback to cloud (status "executing"). 
 &nbsp;|&nbsp;
-**Further Spec**| Spec about details of interface between SM Mapper and SM Agent is under construction. See [Ticket CIT-411](https://cumulocity.atlassian.net/browse/CIT-411)
+**Further Spec**| Spec about details of interface between Cloud Mapper and SM Agent is under construction. See [Ticket CIT-411](https://cumulocity.atlassian.net/browse/CIT-411)
 
 &nbsp;
 &nbsp;
@@ -55,14 +55,14 @@ Name | "Cloud mapper"
 Name | "SM agent"
 --- | --- 
 **Purpose** | The SM agent is the core component in thin-edge that manages the Software Management functionality.
-**Sequence** | (1) On incoming update request from the SM mapper the prepare command is sent to all Package Manager Plugins.
+**Sequence** | (1) On incoming update request from the Cloud mapper the prepare command is sent to all Package Manager Plugins.
 &nbsp;| (2) The SM agent splits sw-list into separate lists per package-type (e.g. "sw-list_pkgType1", "sw-list_pkgType2", ...).
 &nbsp;| (3) The command exec-list is sent with list "sw-list_pktType1" as argument to the Package Manager Plugin for package-type 1. That command allows the plugin to handle the whole list in one command. On the other side the plugin is free to just return \<not-implemeneted\> and instead use a 2nd option provided by agent. The 2nd Option feeds plugin package-by-package, that is more simple but less flexible. Therefore follow next step below.
 &nbsp;| (4) If exec-list has return \<not-implemeneted\> agent iterates over "sw-list_pktType1". For each particular package the command ("install" or "remove") is send to responsible Package Manager Plugin. The according "command" is determined based on information that is part of the sw-list for each package.
 &nbsp;| Same steps (3 and 4 from above) will be executed for each splitted list "sw-list_pktType\<i\>" and according Package Manager Plugin.
 &nbsp;| **TO-BE-DECIDED-#1:** Some delta comparision shall occur at some place, to avoid installing already installed packages and avoid removing not existing ones. To be decided whether delta-comparision shall occur in SM Agent or Package Manager Plugin. (?) <br/><br/>
 &nbsp;|&nbsp;
-**Further Spec**| Spec about details of SM Agent and it's interface to SM Mapper is under construction. See [Ticket CIT-411](https://cumulocity.atlassian.net/browse/CIT-411) <br/>Spec about interface between SM agent and Package Manager Plugin see [src/software-management/plugin-api.md](https://github.com/thin-edge/thin-edge.io-specs/blob/main/src/software-management/plugin-api.md)
+**Further Spec**| Spec about details of SM Agent and it's interface to Cloud Mapper is under construction. See [Ticket CIT-411](https://cumulocity.atlassian.net/browse/CIT-411) <br/>Spec about interface between SM agent and Package Manager Plugin see [src/software-management/plugin-api.md](https://github.com/thin-edge/thin-edge.io-specs/blob/main/src/software-management/plugin-api.md)
 
 &nbsp;
 &nbsp;
