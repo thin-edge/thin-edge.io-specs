@@ -7,17 +7,22 @@ all the software management operations: installation of packages, uninstallation
 * A plugin is an executable that follows the [plugin API](./#plugin-api).
 * On a device, several plugins can be installed to deal with different kinds of software modules.
 * Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.
-* All the actions on a software module are directed to the plugin which name is the module type name.
-* Among all the plugin, one can be distinguished as the default plugin.
-* The default plugin is invoked when no software module type can be determined by the system.
-* Several plugins can co-exist for a given package manager as long as they are given different name.
+* All the actions on a software module are directed to the plugin bearing the name that matches the module type name.
+* Among all the plugins, one can be marked as the default plugin using `tedge config` cli.
+* The default plugin is invoked when an incoming software module from the cloud doesn't contain any explicit type annotation.
+* Several plugins can co-exist for a given package type, but managed by different package managers.
   Each can implement a specific software management policy.
+  For example, for a debian package type, one can have an `apt` plugin that installs the package from an apt repository and
+  another `dpkg` plugin that can install the debian packages locally using their binaries, without the help of any repository.
 
 ## Plugin repository
 
 * To be used by thin-edge, a plugin has to stored in the directory `/etc/tedge/sm-plugins`.
-* The same plugin can be given different names, using virtual links.
-* One of the plugin can be given the name `default`. This plugin is then used as the default plugin.
+* A plugin must be named after the software module type that it can handle.
+  That is, an `apt` plugin **must be** named `apt` and a docker plugin must be named `docker` and so on.
+* When there are multiple plugins on a device, one can be marked as the default plugin using the command
+  `tedge config set software.plugin.default <plugin-name>`
+* If there's one and only one plugin available on a device, that's treated as the default, even without an explicit configuration.
 
 On start-up and sighup, the sm-agent registers the plugins as follow:
 1. Iterate over the executable file of the directory `/etc/tedge/sm-plugins`.
