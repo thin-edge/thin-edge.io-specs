@@ -1,0 +1,271 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Use-Case Update Software-List - Thin Edge Specifications</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../favicon.svg">
+                        <link rel="shortcut icon" href="../favicon.png">
+                <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+                <link rel="stylesheet" href="../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="../telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../software-management/index.html"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../software-management/usecase-update-swlist.html" class="active"><strong aria-hidden="true">2.1.</strong> Use-Case Update Software-List</a></li><li class="chapter-item expanded "><a href="../software-management/plugin-api.html"><strong aria-hidden="true">2.2.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="../software-management/sm-agent.html"><strong aria-hidden="true">2.3.</strong> Software Management Agent</a></li><li class="chapter-item expanded "><a href="../software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">2.4.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="../software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">2.5.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Thin Edge Specifications</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>That document specifies the &quot;Software Management&quot; use-case &quot;Update SW List&quot;. 
+The purpose of the use-case is to install new software or removing existing from
+Cloud side on the device.
+For more information about the context and other use-cases see &quot;Software 
+Management&quot; use-case specification in: <a href="/src/software-management/README.html">src/software-management/README.md</a></p>
+<p>The sequence diagram below indentifies all involved components as well as all 
+message flows between those. Thereby the components are represented as objects,
+starting from the very right side with the actor &quot;Cloud&quot; reaching to the very left side with the
+actor &quot;Package Manager&quot;. Further details (if any) are defined in linked 
+sub-specifications.</p>
+<p>Further explanations about diagram's elements or it's interpretation could be found below the diagram.</p>
+<p><img src="images/uc-update-swlist.svg" alt="Sequence Diagram Update SW-list" /></p>
+<h1 id="components"><a class="header" href="#components">Components</a></h1>
+<table><thead><tr><th>Name</th><th>&quot;Cloud&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>The cloud triggers the &quot;update swlist&quot; operation, and finally receives it's result. The trigger request contains the sw-list to the Cloud mapper on the device.</td></tr>
+<tr><td><strong>Sequence</strong></td><td>(1) The Cloud sends a request to start an update to the Cloud mapper on the device. The request contains the sw-list.</td></tr>
+<tr><td> </td><td>(2) The cloud gets feedback from Cloud mapper (status &quot;executing&quot;) when update was started.</td></tr>
+<tr><td> </td><td>(3) The cloud gets feedback from Cloud mapper (status &quot;successful&quot;) when update was sucessfully processed.</td></tr>
+<tr><td> </td><td> </td></tr>
+<tr><td><strong>Further Spec</strong></td><td>Spec about details of interface between Cloud and Cloud Mapper is under construction. See <a href="https://cumulocity.atlassian.net/browse/CIT-439">Ticket CIT-439</a></td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>Name</th><th>&quot;Cloud mapper&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>The Cloud mapper abstracts the specific Cloud to the SM agent. For each Cloud a specific &quot;Cloud-mapper&quot; might required to be implemented. In that spec the Cloud mapper for Cumulocity is outlined.</td></tr>
+<tr><td><strong>Sequence</strong></td><td>(1) When the Cloud mapper receives an update request from Cloud it forwards the request to the SM agent. If the sw-list contained in the Cloud request does not match the SM agent's interface translation has to be done by the Cloud mapper.</td></tr>
+<tr><td> </td><td>(2) SM agent sends feedback to cloud (status &quot;executing&quot;).</td></tr>
+<tr><td> </td><td> </td></tr>
+<tr><td><strong>Further Spec</strong></td><td>Spec about details of interface between Cloud Mapper and SM Agent is under construction. See <a href="https://cumulocity.atlassian.net/browse/CIT-411">Ticket CIT-411</a></td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>Name</th><th>&quot;SM agent&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>The SM agent is the core component in thin-edge that manages the Software Management functionality.</td></tr>
+<tr><td><strong>Sequence</strong></td><td>(1) On incoming update request from the Cloud mapper the prepare command is sent to all Package Manager Plugins.</td></tr>
+<tr><td> </td><td>(2) The SM agent splits sw-list into separate lists per package-type (e.g. &quot;sw-list_pkgType1&quot;, &quot;sw-list_pkgType2&quot;, ...).</td></tr>
+<tr><td> </td><td>(3) The command exec-list is sent with list &quot;sw-list_pktType1&quot; as argument to the Package Manager Plugin for package-type 1. That command allows the plugin to handle the whole list in one command. On the other side the plugin is free to just return &lt;not-implemeneted&gt; and instead use a 2nd option provided by agent. The 2nd Option feeds plugin package-by-package, that is more simple but less flexible. Therefore follow next step below.</td></tr>
+<tr><td> </td><td>(4) If exec-list has return &lt;not-implemeneted&gt; agent iterates over &quot;sw-list_pktType1&quot;. For each particular package the command (&quot;install&quot; or &quot;remove&quot;) is send to responsible Package Manager Plugin. The according &quot;command&quot; is determined based on information that is part of the sw-list for each package.</td></tr>
+<tr><td> </td><td>Same steps (3 and 4 from above) will be executed for each splitted list &quot;sw-list_pktType&lt;i&gt;&quot; and according Package Manager Plugin.</td></tr>
+<tr><td> </td><td><strong>TO-BE-DECIDED-#1:</strong> Some delta comparision shall occur at some place, to avoid installing already installed packages and avoid removing not existing ones. To be decided whether delta-comparision shall occur in SM Agent or Package Manager Plugin. (?) <br/><br/></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td> </td><td> </td></tr>
+<tr><td><strong>Further Spec</strong></td><td>Spec about details of SM Agent and it's interface to Cloud Mapper is under construction. See <a href="https://cumulocity.atlassian.net/browse/CIT-411">Ticket CIT-411</a> <br/>Spec about interface between SM agent and Package Manager Plugin see <a href="https://github.com/thin-edge/thin-edge.io-specs/blob/main/src/software-management/plugin-api.md">src/software-management/plugin-api.md</a></td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>Name</th><th>Package Manager Plugin</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>To abstract the device specific Package Manager (e.g. Debian's &quot;APT&quot;, Canonical's &quot;Snap&quot; or Red Hat’s “RPM”).</td></tr>
+<tr><td><strong>Sequence</strong></td><td>(1) Receives prepare command from SM agent to do some prepare action, if any.</td></tr>
+<tr><td> </td><td>(2) Receives command &quot;exec-list&quot; including sw-list with all packages for according package-type. The sw-list contains also operations per each package as contained in orignial sw-list from Cloud. The Package Manager Plugin can use that sw-list to instruct the according Package Manager in a specific order to reach intented software configuration. If the order is not relevant for the specific Package Manager the Package Manager Plugin is free to return &lt;not-implemented&gt; here. Then SM agent will feed the plugin package-by-package (see next step below), that might allow a much more simple plugin implementation.</td></tr>
+<tr><td> </td><td>NOTE: For more Details (e.g. about reason for feeding with one list vs. feeding package-by-package) and how to encode &lt;not-implemented&gt; see Package Manager Plugin specififaction referenced below. PLEASE NOTE: Details &quot;feeding with one list&quot; are not yet part of the Package Manager Plugin specififaction, but will be added soon.</td></tr>
+<tr><td> </td><td>(3) If plugin has return &lt;not-implemented&gt; in step 2 above, plugin receives package-by-package command install or removed including Package name from SM agent, and instructs according Package Manager to do so.</td></tr>
+<tr><td> </td><td>(4) Receives finalize command from SM agent to do some finish action, if any.</td></tr>
+<tr><td> </td><td> </td></tr>
+<tr><td><strong>Further Spec</strong></td><td>Spec about interface between SM agent and Package Manager Plugin see <a href="https://github.com/thin-edge/thin-edge.io-specs/blob/main/src/software-management/plugin-api.md">src/software-management/plugin-api.md</a></td></tr>
+</tbody></table>
+<h1 id="open-topcis"><a class="header" href="#open-topcis">Open Topcis</a></h1>
+<p>(1) All unhappy paths missing. Need to be specified.</p>
+<p>(2) Open Decision about delta-comparision between current sw-list and sw-list. See &quot;TO-BE-DECIDED-#1&quot; above.</p>
+<p>(3) Open Decision about stable order in SW-list. See &quot;TO-BE-DECIDED-#2&quot; above.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../software-management/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../software-management/plugin-api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../software-management/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../software-management/plugin-api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+                <script type="text/javascript" src="../mermaid.min.js"></script>
+                <script type="text/javascript" src="../mermaid-init.js"></script>
+        
+        
+    </body>
+</html>

@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="../telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../software-management/index.html" class="active"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../software-management/plugin-api.html"><strong aria-hidden="true">2.1.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="../software-management/sm-agent.html"><strong aria-hidden="true">2.2.</strong> Software Management Agent</a></li><li class="chapter-item expanded "><a href="../software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">2.3.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="../software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">2.4.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="../telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../software-management/index.html" class="active"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../software-management/usecase-update-swlist.html"><strong aria-hidden="true">2.1.</strong> Use-Case Update Software-List</a></li><li class="chapter-item expanded "><a href="../software-management/plugin-api.html"><strong aria-hidden="true">2.2.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="../software-management/sm-agent.html"><strong aria-hidden="true">2.3.</strong> Software Management Agent</a></li><li class="chapter-item expanded "><a href="../software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">2.4.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="../software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">2.5.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -143,7 +143,68 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="software-management"><a class="header" href="#software-management">Software management</a></h1>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>That document specifies the feature &quot;Software Management&quot; in scope of thin-edge.</p>
+<p>In thin-edge &quot;Software Management&quot; functionality basically results from given Cumulocity's &quot;Software Management&quot; feature. Anyway thin-edge's &quot;Software Management&quot; concept shall be flexible and open for potential other upcoming Clouds (e.g. Azure).</p>
+<p>The diagram below indentifies all relevant use-cases for thin-edge. Thereby each use-case represents a functionality and each will be detailed in a further (linked) sub-specifications.</p>
+<p>Some further explanation about diagrams elements it's interpretation could be found below the diagram.</p>
+<p><img src="images/use-cases-sw-management.svg" alt="Use Case Diagram" /></p>
+<h1 id="actors"><a class="header" href="#actors">Actors</a></h1>
+<p>In the middle of the diagram <strong>thin-edge + mosquitto</strong> are visible as system. To reduce complexity both are considered here as one black box. </p>
+<p>At right side actor <strong>Cloud</strong> represents Cumulocity or another potential cloud.</p>
+<p>At left side multiple <strong>Package-Manager</strong> actors are placed. A Package-Manager is a SW component that supportes to install or remove SW packages on the Device (e.g. Debian's &quot;APT&quot;, Canonical's &quot;Snap&quot; or Red Hat’s “RPM”). Thin-edge &quot;SW Management&quot; concept requires that one or more Package-Managers are provided by the Device's SW system.</p>
+<p>Finally on left side actors <strong>FW (Firmware)-Manager</strong> and <strong>Config-Manager</strong> are denoted. Both are shown here to point out that for now Firmware and Configuration are out of scope of that specification. Note that in the diagram both have no connection to any relevant use-case. </p>
+<h1 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h1>
+<p>All use-case above are prefixed with a unique identified (as UC&lt;i&gt;), just for easier referencing.</p>
+<table><thead><tr><th>UC1:</th><th>&quot;Report SW List&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>The device reports a list of current installed SW packages to the cloud. Therefore all Package-Managers are involved.</td></tr>
+<tr><td><strong>Trigger</strong></td><td><strong>TO-BE-DECIDED-#1:</strong> Just on Device/Agent start? Or somehow periodically? (Last might capture also manually installed packages). For taking decicision see also &quot;Software Management Study&quot; in archbee: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>-&gt; There check section &quot;Update Profile Operation&quot; and search for &quot;periodically&quot;.</td></tr>
+<tr><td> </td><td>TODO: add link to more details about that use-case.</td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>UC2:</th><th>&quot;Update SW List&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>Installing or removing one or more SW packages on the device.</td></tr>
+<tr><td><strong>Trigger</strong></td><td>Request coming from cloud.</td></tr>
+<tr><td> </td><td>Detailed spec for that use-case is here: <a href="/src/software-management/usecase-update-swlist.html">src/software-management/usecase-update-swlist.md</a></td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>UC3:</th><th>&quot;Sync SW List&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>Sync Software List of Cumulocity. In Cumulocity it has been deprecated in favour of &quot;Update Software&quot;.<br/> For now that use-case is out of scope for thin-edge.<br/> See also &quot;Cumulocity Use Case: Sync Software List&quot; in archbee: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/UuDcppPEYlD9alaF7y_e7</td></tr>
+<tr><td><strong>Trigger</strong></td><td></td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>UC4:</th><th>&quot;Update Profile&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>Update Profile Operation of Cumulocity. A profile contains beside a SW list also a desired Firmware and Configuration.<br/> Firmware-Management and Coniguration-Management are planned later for thin-edge, so that use-case is currently not relevant.</td></tr>
+<tr><td><strong>Trigger</strong></td><td></td></tr>
+</tbody></table>
+<p> 
+ 
+ 
+ 
+ 
+ </p>
+<table><thead><tr><th>UC5:</th><th>&quot;Install/Remove SW Package&quot;</th></tr></thead><tbody>
+<tr><td><strong>Purpose</strong></td><td>Installs or removes one or more SW packages on the Device. Therefore the Package-Manager that manages the relevant package is involved.</td></tr>
+<tr><td><strong>Trigger</strong></td><td>UC2 (&quot;Update SW List&quot;)</td></tr>
+<tr><td> </td><td>Detailed spec for that use-case is here (same as for UC2): <a href="/src/software-management/usecase-update-swlist.html">src/software-management/usecase-update-swlist.md</a></td></tr>
+</tbody></table>
+<h1 id="open-topcis"><a class="header" href="#open-topcis">Open Topcis</a></h1>
+<p>(1) Open Decision about trigger of &quot;Report SW List&quot;. See &quot;TO-BE-DECIDED-#1&quot; above.</p>
 
                     </main>
 
@@ -153,7 +214,7 @@
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="../software-management/plugin-api.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                                    <a rel="next" href="../software-management/usecase-update-swlist.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -167,7 +228,7 @@
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="../software-management/plugin-api.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                    <a rel="next" href="../software-management/usecase-update-swlist.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                             </nav>
