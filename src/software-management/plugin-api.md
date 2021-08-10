@@ -6,22 +6,26 @@ all the software management operations: installation of packages, uninstallation
 * A package manager plugin acts as a facade for a specific package manager.
 * A plugin is an executable that follows the [plugin API](./#plugin-api).
 * On a device, several plugins can be installed to deal with different kinds of software modules.
-* Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.
-* All the actions on a software module are directed to the plugin which name is the module type name.
-* Among all the plugin, one can be distinguished as the default plugin.
-* The default plugin is invoked when no software module type can be determined by the system.
-* Several plugins can co-exist for a given package manager as long as they are given different name.
+* Each plugin supports a `type` command that is used by thin-edge to determine the appropriate plugin for a software module.
+* All the actions on a software module are directed to the plugin whose type is the module type name.
+* Among all the plugins, one can be marked as the default plugin by naming it as `default`.
+* The default plugin is invoked when an incoming software module from the cloud doesn't contain any explicit type information.
+* Several plugins can co-exist for a given package manager as long as they have different types.
   Each can implement a specific software management policy.
+  For example, for a debian package type, one can have an apt plugin that installs the package from an apt repository and
+  another dpkg plugin that can install the debian packages locally using their binaries, without the help of an apt repository.
 
 ## Plugin repository
 
 * To be used by thin-edge, a plugin has to stored in the directory `/etc/tedge/sm-plugins`.
 * The same plugin can be given different names, using virtual links.
-* One of the plugin can be given the name `default`. This plugin is then used as the default plugin.
+* The [`type` command](./#the_type_command) output of the plugin script would indicate the software module type that it can handle.
+* One of the plugins can be given the name `default`. This plugin is then used as the default plugin.
 
 On start-up and sighup, the sm-agent registers the plugins as follow:
 1. Iterate over the executable file of the directory `/etc/tedge/sm-plugins`.
-2. Check the executable is indeed a plugin, calling the [`list`](./#the_list_command) command.
+2. Check the executable is indeed a plugin, calling the [`type`](./#the_type_command) command.
+3. Any plugin script that returns an invalid output on `type` command invocation will be rejected.
 
 ## Plugin API
 
@@ -49,6 +53,33 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
     * __`3`__: retry. The command failed but might be successful later (for instance, when the network will be back).
 * If the command fails to return within 5 minutes, the sm-agent reports a timeout error:
     * __`4`__: timeout.
+
+### The `type` command
+
+When called with the `type` command, a plugin returns the software module type it can be used for.
+
+```shell
+$ /etc/tedge/sm-plugins/debian type
+debian
+```
+
+This command output is used as the plugin type by the software management agent to determine which plugin,
+amongst all the available ones, is appropriate to handle an incoming software module type.
+
+Note that a plugin alias like `default` returns the type of the referenced plugin.
+
+```
+$ /etc/tedge/sm-plugins/tedge-apt-plugin type
+apt
+$ /etc/tedge/sm-plugins/epl-plugin type
+apama
+$ /etc/tedge/sm-plugins/default type
+apt
+```
+
+Contract:
+* This command takes no arguments.
+* If nothing is printed on to the console, or an error status is returned, the executable is not registered as a valid plugin.
 
 ### The `list` command
 
