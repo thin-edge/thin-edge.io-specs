@@ -8,12 +8,14 @@ all the software management operations: installation of packages, uninstallation
 * On a device, several plugins can be installed to deal with different kinds of software modules.
 * Each plugin supports a `type` command that is used by thin-edge to determine the appropriate plugin for a software module.
 * All the actions on a software module are directed to the plugin whose type is the module type name.
-* Among all the plugins, one can be marked as the default plugin by naming it as `default`.
+* Among all the plugins, one can be marked as the default plugin by naming it as `default` or by creating a symlink with that name.
 * The default plugin is invoked when an incoming software module from the cloud doesn't contain any explicit type information.
 * Several plugins can co-exist for a given package manager as long as they have different types.
   Each can implement a specific software management policy.
   For example, for a debian package type, one can have an apt plugin that installs the package from an apt repository and
-  another dpkg plugin that can install the debian packages locally using their binaries, without the help of an apt repository.
+  another dpkg plugin that can install the debian packages locally using their binaries, without the help of any repository.
+* Plugins will be loaded by the sm-agent in the order of their names on the file system.
+* If multiple plugins return the same type, the first one loaded will be used with a warning logged about the conflicting plugin.
 
 ## Plugin repository
 
@@ -56,11 +58,11 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
 
 ### The `type` command
 
-When called with the `type` command, a plugin returns the software module type it can be used for.
+When called with the `type` command, a plugin returns the software module type it can be used for, in JSON format.
 
 ```shell
 $ /etc/tedge/sm-plugins/debian type
-debian
+{"type": "debian"}
 ```
 
 This command output is used as the plugin type by the software management agent to determine which plugin,
@@ -70,11 +72,11 @@ Note that a plugin alias like `default` returns the type of the referenced plugi
 
 ```
 $ /etc/tedge/sm-plugins/tedge-apt-plugin type
-apt
+{"type": "apt"}
 $ /etc/tedge/sm-plugins/epl-plugin type
-apama
+{"type": "apama"}
 $ /etc/tedge/sm-plugins/default type
-apt
+{"type": "apt"}
 ```
 
 Contract:
