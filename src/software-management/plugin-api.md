@@ -8,6 +8,8 @@ all the software management operations: installation of packages, uninstallation
 * On a device, several plugins can be installed to deal with different kinds of software modules.
 * Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.
 * All the actions on a software module are directed to the plugin bearing the name that matches the module type name.
+* Plugins will be loaded and invoked by the sm-agent in the alphabetical order of their names on the file system.
+* When there are multiple modules to be handled by a plugin, these modules are also passed to the plugin in alphabetical order one by one to maintain consistent execution order.
 * Among all the plugins, one can be marked as the default plugin using `tedge config` cli.
 * The default plugin is invoked when an incoming software module from the cloud doesn't contain any explicit type annotation.
 * Several plugins can co-exist for a given package type, but managed by different package managers.
