@@ -56,6 +56,7 @@ sequenceDiagram
     participant SM Agent
     participant Cloud Mapper
     Cloud Mapper-->>SM Agent: SoftwareListRequest
+    SM Agent ->> Cloud Mapper: Status executing
     loop Each Plugin
         SM Agent->>Software Plugin: plugin-cmd list
         Software Plugin-->>SM Agent: list cmd output
@@ -209,7 +210,7 @@ Payload format:
             "modules": [
                 {
                     "name": "nodered",
-                    "version": "1.0.0",
+                    "version": "1.0.0"
                 },
                 {
                     "name": "collectd",
@@ -222,11 +223,11 @@ Payload format:
             "modules": [
                 {
                     "name": "nginx",
-                    "version": "1.21.0",
+                    "version": "1.21.0"
                 },
                 {
                     "name": "mongodb",
-                    "version": "4.4.6",
+                    "version": "4.4.6"
                 }
             ]
         }
@@ -253,6 +254,15 @@ If fetching the software list had failed, the reponse would have indicated a fai
     "id": 123,
     "status": "failed",
     "reason": "Request timed-out"
+}
+```
+
+#### Executing Status Payload
+
+```json
+{
+    "id": 123,
+    "status": "executing"
 }
 ```
 
