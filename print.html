@@ -700,6 +700,7 @@ One receipt of this capability announcement message, the mapper will respond bac
     participant SM Agent
     participant Cloud Mapper
     Cloud Mapper--&gt;&gt;SM Agent: SoftwareListRequest
+    SM Agent -&gt;&gt; Cloud Mapper: Status executing
     loop Each Plugin
         SM Agent-&gt;&gt;Software Plugin: plugin-cmd list
         Software Plugin--&gt;&gt;SM Agent: list cmd output
@@ -821,7 +822,7 @@ If there are no PENDING operations of that kind, then mapper won't send any resp
             &quot;modules&quot;: [
                 {
                     &quot;name&quot;: &quot;nodered&quot;,
-                    &quot;version&quot;: &quot;1.0.0&quot;,
+                    &quot;version&quot;: &quot;1.0.0&quot;
                 },
                 {
                     &quot;name&quot;: &quot;collectd&quot;,
@@ -834,11 +835,11 @@ If there are no PENDING operations of that kind, then mapper won't send any resp
             &quot;modules&quot;: [
                 {
                     &quot;name&quot;: &quot;nginx&quot;,
-                    &quot;version&quot;: &quot;1.21.0&quot;,
+                    &quot;version&quot;: &quot;1.21.0&quot;
                 },
                 {
                     &quot;name&quot;: &quot;mongodb&quot;,
-                    &quot;version&quot;: &quot;4.4.6&quot;,
+                    &quot;version&quot;: &quot;4.4.6&quot;
                 }
             ]
         }
@@ -861,6 +862,12 @@ It can be optional and can be empty for the default software module type of the 
     &quot;id&quot;: 123,
     &quot;status&quot;: &quot;failed&quot;,
     &quot;reason&quot;: &quot;Request timed-out&quot;
+}
+</code></pre>
+<h4 id="executing-status-payload"><a class="header" href="#executing-status-payload">Executing Status Payload</a></h4>
+<pre><code class="language-json">{
+    &quot;id&quot;: 123,
+    &quot;status&quot;: &quot;executing&quot;
 }
 </code></pre>
 <h2 id="software-update-operation"><a class="header" href="#software-update-operation">Software Update Operation</a></h2>
@@ -907,7 +914,7 @@ It can be optional and can be empty for the default software module type of the 
 <h3 id="thin-edge-json-software-update-response"><a class="header" href="#thin-edge-json-software-update-response">Thin Edge JSON Software Update Response</a></h3>
 <p>Once a software-update operation is received, it must be acknowledged with an EXECUTING response, followed by a SUCCESSFUL or FAILED response.</p>
 <p>Topic to subscribe for the software update response: <code>tedge/commands/res/software/update</code></p>
-<h4 id="executing-status-payload"><a class="header" href="#executing-status-payload">Executing Status Payload</a></h4>
+<h4 id="executing-status-payload-1"><a class="header" href="#executing-status-payload-1">Executing Status Payload</a></h4>
 <pre><code class="language-json">{
     &quot;id&quot;: 123,
     &quot;status&quot;: &quot;executing&quot;
