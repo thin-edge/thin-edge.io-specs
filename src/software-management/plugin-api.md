@@ -8,20 +8,20 @@ all the software management operations: installation of packages, uninstallation
 * On a device, several plugins can be installed to deal with different kinds of software modules.
 * Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.
 * All the actions on a software module are directed to the plugin bearing the name that matches the module type name.
-* Plugins will be loaded and invoked by the sm-agent in the alphabetical order of their names on the file system.
-* When there are multiple modules to be handled by a plugin, these modules are also passed to the plugin in alphabetical order one by one to maintain consistent execution order.
+* Plugins will be loaded and invoked by the sm-agent in the alphanumerical order of their names in the file system.
 * Among all the plugins, one can be marked as the default plugin using `tedge config` cli.
-* The default plugin is invoked when an incoming software module from the cloud doesn't contain any explicit type annotation.
-* Several plugins can co-exist for a given package type, but managed by different package managers.
+* The default plugin is invoked when an incoming software module in the cloud request doesn't contain any explicit type annotation.
+* Several plugins can co-exist for a given package manager as long as they are given different names.
   Each can implement a specific software management policy.
-  For example, for a debian package type, one can have an `apt` plugin that installs the package from an apt repository and
-  another `dpkg` plugin that can install the debian packages locally using their binaries, without the help of any repository.
+  For instance, for a debian package manager, several plugins can concurrently be installed, say one named `apt` to handle regular packages from the public apt repository and another named `company-apt` to install packages from a company's private package repository.
 
 ## Plugin repository
 
 * To be used by thin-edge, a plugin has to stored in the directory `/etc/tedge/sm-plugins`.
-* A plugin must be named after the software module type that it can handle.
-  That is, an `apt` plugin **must be** named `apt` and a docker plugin must be named `docker` and so on.
+* A plugin must be named after the software module type as specified in the cloud request.
+  That is, a plugin named `apt` handles software modules that are defined with type `apt` in the cloud request.
+  Consequently a plugin to handle software module defined for `docker` must be named `docker`.
+* The same plugin can be given different names, using virtual links.
 * When there are multiple plugins on a device, one can be marked as the default plugin using the command
   `tedge config set software.plugin.default <plugin-name>`
 * If there's one and only one plugin available on a device, that's treated as the default, even without an explicit configuration.
