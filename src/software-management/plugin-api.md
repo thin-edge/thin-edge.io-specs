@@ -6,9 +6,10 @@ all the software management operations: installation of packages, uninstallation
 * A package manager plugin acts as a facade for a specific package manager.
 * A plugin is an executable that follows the [plugin API](./#plugin-api).
 * On a device, several plugins can be installed to deal with different kinds of software modules.
-* Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.
+* The filename of a plugin is used by thin-edge to determine the appropriate plugin for a software module.
 * All the actions on a software module are directed to the plugin bearing the name that matches the module type name.
-* Plugins will be loaded and invoked by the sm-agent in the alphanumerical order of their names in the file system.
+* The plugins are loaded and invoked by the sm-agent in a systematic order (in practice the alphanumerical order of their names in the file system).
+* The software modules to be installed/removed are also passed to the plugins in a consistent order.
 * Among all the plugins, one can be marked as the default plugin using `tedge config` cli.
 * The default plugin is invoked when an incoming software module in the cloud request doesn't contain any explicit type annotation.
 * Several plugins can co-exist for a given package manager as long as they are given different names.
