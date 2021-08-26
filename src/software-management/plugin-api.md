@@ -35,8 +35,8 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
 ### Input, Output and Errors
 
 * The plugins are called by the sm-agent using a child process for each action.
-* For the current list of commands there is no input beyond the command arguments,
-  and a plugin can close its `stdin`.
+* Beside command `exec-list` there is no input beyond the command arguments, and a plugin that does not 
+  implement `exec-list` can close its `stdin`.
 * The `stdout` and `stderr` of the process running a plugin command are captured by the sm-agent.
   * These streams don't have to be the streams returned by the underlying package manager.
     It can be a one sentence summary of the error, redirecting the administrator to the package manager logs.
@@ -178,3 +178,55 @@ Contract:
 * An error must be reported if:
   * The module name is unknown.
   * The module cannot be uninstalled.
+
+### The `exec-list` command
+
+The `exec-list` command accepts a list of software modules and associated operations as `install` or `remove`.
+
+This basically achieves same purpose as original commands `install` and `remove`, but gets passed all software modules to be processed in one command.
+This can be needed when order of processing software modules is relevant - e.g. when dependencies between packages inside the sw-list do occur.
+
+
+```
+# building list of software modules and operations, 
+# and passing to plugin's stdin via pipe:
+
+$ echo '\
+install "name1" "version1" "path1"
+install "name2" "version2" ""
+remove  "name3" "version3"
+remove  "some name with spaces" ""' \
+ | plugin exec-list
+```
+
+Output of the command on `stdout`:
+```
+{"name":"name1","exitstatus":"0"}
+{"name":"name2","exitstatus":"0"}
+{"name":"name3","exitstatus":"0"}
+{"name":"some name with spaces","exitstatus":"0"}
+```
+
+Contract:
+* This command is optional for a plugin. It can be implemented alternatively to original commands `install` and `remove` as both are specified above.
+  * If a plugin does not implement this command it can return exit status `1`. In that case sm-agent will call the plugin again 
+    package-by-package using original commands `install` and `remove`.
+  * If a plugin implements this command sm-agent uses it instead of original commands `install` and `remove`.
+* This command takes no commandline arguments, but expects a sw-list (software list) sent from sm-agent to plugin's `stdin`.
+* In the sw-list each software module is represented by exactly on line. That line is formatted as a usual shell commandline argument list.
+* Each of a software module's commandline argument list is treated as shell does, i.E. quotes and escapes can be used.
+* The position of each argument in the argument list has it's defined meaning:
+  * 1st argument: Is the operation and can be `install` or `remove` 
+  * 2nd argument: Is the software module's name.
+  * 3rd argument: Is the software module's version. That argument is optional and can be empty (then empty string "" is used).
+  * 4th argument: Is the software module's path. That argument is optional and can be empty (then empty string "" is used). For operation `remove` that argument does not exist.
+* Last \<n\> lines of stdout shall be in [jsonlines](https://jsonlines.org/) format. Where \<n\> means number of software modules in sw-list.
+  * For each module of the sw-list one line has to occur.
+  * The jsonline contains `name` with software modules name, and `exitstatus` with the operations error code.
+  * Even if a plugin is not be capable to detect exitstatus per software module, one jsonline per software module has to be outputted. 
+    In that case for `exitstatus` value an empty string ("") may used.
+* Behaviour of operations `install` and `remove` is same as for original commands `install` and `remove` as specified above.
+  * For details about operations argument's "name", "version" and "path" see specification of original command `install` or `remove`.
+  * For details about `exitstatus` see accoring specification of original command `install` or `remove`. 
+* An overall error must be reported (via process's exit status) when at least one software module operation has failed.
+
