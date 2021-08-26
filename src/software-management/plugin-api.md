@@ -230,3 +230,50 @@ Contract:
   * For details about `exitstatus` see accoring specification of original command `install` or `remove`. 
 * An overall error must be reported (via process's exit status) when at least one software module operation has failed.
 
+Exemplary reference implementation of a shell script for parsing sw-list from `stdin`:
+
+```
+#!/bin/sh
+
+read_module() {
+    if [ $# -lt 3 ]
+    then
+      echo "Missing version or path for sw-module '${1}'"
+    else
+      mOperation=${1}
+      shift
+      mName=${1}
+      shift
+      mVersion=${1}
+      shift
+      mPath=${1}
+      shift
+      echo "$mOperation, $mName, $mVersion, $mPath"
+    fi
+}
+
+echo ""
+echo "---+++ reading sw-list +++---"
+while read -r line;
+do
+  # convert line to command-line argument array
+  eval "moduleArray=($line)";
+  read_module "${moduleArray[@]}"
+done
+```
+
+Example call of secipt above:
+```
+# build sw-list and call script 
+$ echo '\install "name1" "version1" ""
+install "name2" "" "path2"
+remove "name 3" "version3" ""
+remove "name4" ""' | ./exec-list.sh
+
+---+++ reading sw-list +++---
+install, name1, version1,
+install, name2, , path2
+remove, name 3, version3,
+remove, name4, ,
+```
+
