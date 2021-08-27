@@ -150,18 +150,26 @@ all the software management operations: installation of packages, uninstallation
 <li>A package manager plugin acts as a facade for a specific package manager.</li>
 <li>A plugin is an executable that follows the <a href="./#plugin-api">plugin API</a>.</li>
 <li>On a device, several plugins can be installed to deal with different kinds of software modules.</li>
-<li>Each plugin is given a name that is used by thin-edge to determine the appropriate plugin for a software module.</li>
-<li>All the actions on a software module are directed to the plugin which name is the module type name.</li>
-<li>Among all the plugin, one can be distinguished as the default plugin.</li>
-<li>The default plugin is invoked when no software module type can be determined by the system.</li>
-<li>Several plugins can co-exist for a given package manager as long as they are given different name.
-Each can implement a specific software management policy.</li>
+<li>The filename of a plugin is used by thin-edge to determine the appropriate plugin for a software module.</li>
+<li>All the actions on a software module are directed to the plugin bearing the name that matches the module type name.</li>
+<li>The plugins are loaded and invoked by the sm-agent in a systematic order (in practice the alphanumerical order of their names in the file system).</li>
+<li>The software modules to be installed/removed are also passed to the plugins in a consistent order.</li>
+<li>Among all the plugins, one can be marked as the default plugin using <code>tedge config</code> cli.</li>
+<li>The default plugin is invoked when an incoming software module in the cloud request doesn't contain any explicit type annotation.</li>
+<li>Several plugins can co-exist for a given package manager as long as they are given different names.
+Each can implement a specific software management policy.
+For instance, for a debian package manager, several plugins can concurrently be installed, say one named <code>apt</code> to handle regular packages from the public apt repository and another named <code>company-apt</code> to install packages from a company's private package repository.</li>
 </ul>
 <h2 id="plugin-repository"><a class="header" href="#plugin-repository">Plugin repository</a></h2>
 <ul>
 <li>To be used by thin-edge, a plugin has to stored in the directory <code>/etc/tedge/sm-plugins</code>.</li>
+<li>A plugin must be named after the software module type as specified in the cloud request.
+That is, a plugin named <code>apt</code> handles software modules that are defined with type <code>apt</code> in the cloud request.
+Consequently a plugin to handle software module defined for <code>docker</code> must be named <code>docker</code>.</li>
 <li>The same plugin can be given different names, using virtual links.</li>
-<li>One of the plugin can be given the name <code>default</code>. This plugin is then used as the default plugin.</li>
+<li>When there are multiple plugins on a device, one can be marked as the default plugin using the command
+<code>tedge config set software.plugin.default &lt;plugin-name&gt;</code></li>
+<li>If there's one and only one plugin available on a device, that's treated as the default, even without an explicit configuration.</li>
 </ul>
 <p>On start-up and sighup, the sm-agent registers the plugins as follow:</p>
 <ol>
