@@ -184,7 +184,7 @@ Contract:
 The `exec-list` command accepts a list of software modules and associated operations as `install` or `remove`.
 
 This basically achieves same purpose as original commands `install` and `remove`, but gets passed all software modules to be processed in one command.
-This can be needed when order of processing software modules is relevant - e.g. when dependencies between packages inside the sw-list do occur.
+This can be needed when order of processing software modules is relevant - e.g. when dependencies between packages inside the software list do occur.
 
 
 ```
@@ -212,16 +212,16 @@ Contract:
   * If a plugin does not implement this command it can return exit status `1`. In that case sm-agent will call the plugin again 
     package-by-package using original commands `install` and `remove`.
   * If a plugin implements this command sm-agent uses it instead of original commands `install` and `remove`.
-* This command takes no commandline arguments, but expects a sw-list (software list) sent from sm-agent to plugin's `stdin`.
-* In the sw-list each software module is represented by exactly on line. That line is formatted as a usual shell commandline argument list.
+* This command takes no commandline arguments, but expects a software list sent from sm-agent to plugin's `stdin`.
+* In the software list each software module is represented by exactly on line. That line is formatted as a usual shell commandline argument list.
 * Each of a software module's commandline argument list is treated as shell does, i.E. quotes and escapes can be used.
 * The position of each argument in the argument list has it's defined meaning:
   * 1st argument: Is the operation and can be `install` or `remove` 
   * 2nd argument: Is the software module's name.
   * 3rd argument: Is the software module's version. That argument is optional and can be empty (then empty string "" is used).
   * 4th argument: Is the software module's path. That argument is optional and can be empty (then empty string "" is used). For operation `remove` that argument does not exist.
-* Last \<n\> lines of stdout shall be in [jsonlines](https://jsonlines.org/) format. Where \<n\> means number of software modules in sw-list.
-  * For each module of the sw-list one line has to occur.
+* Last \<n\> lines of stdout shall be in [jsonlines](https://jsonlines.org/) format. Where \<n\> means number of software modules in software list.
+  * For each module of the software list one line has to occur.
   * The jsonline contains `name` with software modules name, and `exitstatus` with the operations error code.
   * Even if a plugin is not be capable to detect exitstatus per software module, one jsonline per software module has to be outputted. 
     In that case for `exitstatus` value an empty string ("") may used.
@@ -230,7 +230,7 @@ Contract:
   * For details about `exitstatus` see accoring specification of original command `install` or `remove`. 
 * An overall error must be reported (via process's exit status) when at least one software module operation has failed.
 
-Exemplary reference implementation of a shell script for parsing sw-list from `stdin`:
+Exemplary reference implementation of a shell script for parsing software list from `stdin`:
 
 ```
 #!/bin/sh
@@ -253,7 +253,7 @@ read_module() {
 }
 
 echo ""
-echo "---+++ reading sw-list +++---"
+echo "---+++ reading software list +++---"
 while read -r line;
 do
   # convert line to command-line argument array
@@ -264,13 +264,13 @@ done
 
 Example call of secipt above:
 ```
-# build sw-list and call script 
+# build software list and call script 
 $ echo '\install "name1" "version1" ""
 install "name2" "" "path2"
 remove "name 3" "version3" ""
 remove "name4" ""' | ./exec-list.sh
 
----+++ reading sw-list +++---
+---+++ reading software list +++---
 install, name1, version1,
 install, name2, , path2
 remove, name 3, version3,
