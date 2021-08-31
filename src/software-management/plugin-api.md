@@ -199,14 +199,6 @@ remove  "some name with spaces" ""' \
  | plugin update-list
 ```
 
-Output of the command on `stdout`:
-```
-{"name":"name1","exitstatus":"0"}
-{"name":"name2","exitstatus":"0"}
-{"name":"name3","exitstatus":"0"}
-{"name":"some name with spaces","exitstatus":"0"}
-```
-
 Contract:
 * This command is optional for a plugin. It can be implemented alternatively to original commands `install` and `remove` as both are specified above.
   * If a plugin does not implement this command it must return exit status `1`. In that case sm-agent will call the plugin again 
@@ -220,11 +212,6 @@ Contract:
   * 2nd argument: Is the software module's name.
   * 3rd argument: Is the software module's version. That argument is optional and can be empty (then empty string "" is used).
   * 4th argument: Is the software module's path. That argument is optional and can be empty (then empty string "" is used). For operation `remove` that argument does not exist.
-* Last \<n\> lines of stdout shall be in [jsonlines](https://jsonlines.org/) format. Where \<n\> means number of software modules in software list.
-  * For each module of the software list one line has to occur.
-  * The jsonline contains `name` with software modules name, and `exitstatus` with the operations error code.
-  * Even if a plugin is not be capable to detect exitstatus per software module, one jsonline per software module has to be outputted. 
-    In that case for `exitstatus` value an empty string ("") may used.
 * Behaviour of operations `install` and `remove` is same as for original commands `install` and `remove` as specified above.
   * For details about operations argument's "name", "version" and "path" see specification of original command `install` or `remove`.
   * For details about `exitstatus` see accoring specification of original command `install` or `remove`. 
