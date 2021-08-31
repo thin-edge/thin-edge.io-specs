@@ -35,8 +35,8 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
 ### Input, Output and Errors
 
 * The plugins are called by the sm-agent using a child process for each action.
-* Beside command `exec-list` there is no input beyond the command arguments, and a plugin that does not 
-  implement `exec-list` can close its `stdin`.
+* Beside command `update-list` there is no input beyond the command arguments, and a plugin that does not 
+  implement `update-list` can close its `stdin`.
 * The `stdout` and `stderr` of the process running a plugin command are captured by the sm-agent.
   * These streams don't have to be the streams returned by the underlying package manager.
     It can be a one sentence summary of the error, redirecting the administrator to the package manager logs.
@@ -179,9 +179,9 @@ Contract:
   * The module name is unknown.
   * The module cannot be uninstalled.
 
-### The `exec-list` command
+### The `update-list` command
 
-The `exec-list` command accepts a list of software modules and associated operations as `install` or `remove`.
+The `update-list` command accepts a list of software modules and associated operations as `install` or `remove`.
 
 This basically achieves same purpose as original commands `install` and `remove`, but gets passed all software modules to be processed in one command.
 This can be needed when order of processing software modules is relevant - e.g. when dependencies between packages inside the software list do occur.
@@ -196,7 +196,7 @@ install "name1" "version1" "path1"
 install "name2" "version2" ""
 remove  "name3" "version3"
 remove  "some name with spaces" ""' \
- | plugin exec-list
+ | plugin update-list
 ```
 
 Output of the command on `stdout`:
@@ -268,7 +268,7 @@ Example call of secipt above:
 $ echo '\install "name1" "version1" ""
 install "name2" "" "path2"
 remove "name 3" "version3" ""
-remove "name4" ""' | ./exec-list.sh
+remove "name4" ""' | ./update-list.sh
 
 ---+++ reading software list +++---
 install, name1, version1,
