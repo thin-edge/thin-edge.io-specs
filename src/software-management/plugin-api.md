@@ -205,7 +205,7 @@ Contract:
     package-by-package using original commands `install` and `remove`.
   * If a plugin implements this command sm-agent uses it instead of original commands `install` and `remove`.
 * This command takes no commandline arguments, but expects a software list sent from sm-agent to plugin's `stdin`.
-* In the software list each software module is represented by exactly on line. That line is formatted as a usual shell commandline argument list.
+* In the software list each software module is represented by exactly one line. That line is formatted as a usual shell commandline argument list.
 * Each of a software module's commandline argument list is treated as shell does, i.E. quotes and escapes can be used.
 * The position of each argument in the argument list has it's defined meaning:
   * 1st argument: Is the operation and can be `install` or `remove` 
