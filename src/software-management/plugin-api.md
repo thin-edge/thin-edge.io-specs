@@ -209,7 +209,7 @@ Output of the command on `stdout`:
 
 Contract:
 * This command is optional for a plugin. It can be implemented alternatively to original commands `install` and `remove` as both are specified above.
-  * If a plugin does not implement this command it can return exit status `1`. In that case sm-agent will call the plugin again 
+  * If a plugin does not implement this command it must return exit status `1`. In that case sm-agent will call the plugin again 
     package-by-package using original commands `install` and `remove`.
   * If a plugin implements this command sm-agent uses it instead of original commands `install` and `remove`.
 * This command takes no commandline arguments, but expects a software list sent from sm-agent to plugin's `stdin`.
