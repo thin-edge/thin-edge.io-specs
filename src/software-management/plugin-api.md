@@ -217,8 +217,25 @@ Contract:
   * For details about `exitstatus` see accoring specification of original command `install` or `remove`. 
 * An overall error must be reported (via process's exit status) when at least one software module operation has failed.
 
-Exemplary reference implementation of a shell script for parsing software list from `stdin`:
+Example how to invoke that plugin command `update-list`:
+```
+$ plugin update-list <<EOF
+install name1 version1
+install name2 "" path2
+remove "name 3" version3
+remove name4
+EOF
+```
 
+That is equivalent to use of original commands (`install` and `remove`):
+```
+$ plugin install name1 --module-version version1
+$ plugin install name2 --module-path path2
+$ plugin remove "name 3" --module-version version3
+$ plugin remove name4
+```
+
+Exemplary implementation of a shell script for parsing software list from `stdin`:
 ```
 #!/bin/sh
 
@@ -247,20 +264,5 @@ do
   eval "moduleArray=($line)";
   read_module "${moduleArray[@]}"
 done
-```
-
-Example call of secipt above:
-```
-# build software list and call script 
-$ echo '\install "name1" "version1" ""
-install "name2" "" "path2"
-remove "name 3" "version3" ""
-remove "name4" ""' | ./update-list.sh
-
----+++ reading software list +++---
-install, name1, version1,
-install, name2, , path2
-remove, name 3, version3,
-remove, name4, ,
 ```
 
