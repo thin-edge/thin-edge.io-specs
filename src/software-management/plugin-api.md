@@ -43,8 +43,8 @@ On start-up and sighup, the sm-agent registers the plugins as follow:
 ### Input, Output and Errors
 
 * The plugins are called by the sm-agent using a child process for each action.
-* For the current list of commands there is no input beyond the command arguments,
-  and a plugin can close its `stdin`.
+* Beside command `update-list` there is no input beyond the command arguments, and a plugin that does not 
+  implement `update-list` can close its `stdin`.
 * The `stdout` and `stderr` of the process running a plugin command are captured by the sm-agent.
   * These streams don't have to be the streams returned by the underlying package manager.
     It can be a one sentence summary of the error, redirecting the administrator to the package manager logs.
@@ -186,3 +186,91 @@ Contract:
 * An error must be reported if:
   * The module name is unknown.
   * The module cannot be uninstalled.
+
+### The `update-list` command
+
+The `update-list` command accepts a list of software modules and associated operations as `install` or `remove`.
+
+This basically achieves same purpose as original commands `install` and `remove`, but gets passed all software modules to be processed in one command.
+This can be needed when order of processing software modules is relevant - e.g. when dependencies between packages inside the software list do occur.
+
+
+```
+# building list of software modules and operations, 
+# and passing to plugin's stdin via pipe:
+
+$ echo '\
+install "name1" "version1" "path1"
+install "name2" "version2" ""
+remove  "name3" "version3"
+remove  "some name with spaces" ""' \
+ | plugin update-list
+```
+
+Contract:
+* This command is optional for a plugin. It can be implemented alternatively to original commands `install` and `remove` as both are specified above.
+  * If a plugin does not implement this command it must return exit status `1`. In that case sm-agent will call the plugin again 
+    package-by-package using original commands `install` and `remove`.
+  * If a plugin implements this command sm-agent uses it instead of original commands `install` and `remove`.
+* This command takes no commandline arguments, but expects a software list sent from sm-agent to plugin's `stdin`.
+* In the software list each software module is represented by exactly one line. That line is formatted as a usual shell commandline argument list.
+* Each of a software module's commandline argument list is treated as shell does, i.E. quotes and escapes can be used.
+* The position of each argument in the argument list has it's defined meaning:
+  * 1st argument: Is the operation and can be `install` or `remove` 
+  * 2nd argument: Is the software module's name.
+  * 3rd argument: Is the software module's version. That argument is optional and can be empty (then empty string "" is used).
+  * 4th argument: Is the software module's path. That argument is optional and can be empty (then empty string "" is used). For operation `remove` that argument does not exist.
+* Behaviour of operations `install` and `remove` is same as for original commands `install` and `remove` as specified above.
+  * For details about operations' arguments "name", "version" and "path", see specification of original command `install` or `remove`.
+  * For details about `exitstatus` see accoring specification of original command `install` or `remove`. 
+* An overall error must be reported (via process's exit status) when at least one software module operation has failed.
+
+Example how to invoke that plugin command `update-list`:
+```
+$ plugin update-list <<EOF
+install name1 version1
+install name2 "" path2
+remove "name 3" version3
+remove name4
+EOF
+```
+
+That is equivalent to use of original commands (`install` and `remove`):
+```
+$ plugin install name1 --module-version version1
+$ plugin install name2 --module-path path2
+$ plugin remove "name 3" --module-version version3
+$ plugin remove name4
+```
+
+Exemplary implementation of a shell script for parsing software list from `stdin`:
+```
+#!/bin/sh
+
+read_module() {
+    if [ $# -lt 3 ]
+    then
+      echo "Missing version or path for sw-module '${1}'"
+    else
+      mOperation=${1}
+      shift
+      mName=${1}
+      shift
+      mVersion=${1}
+      shift
+      mPath=${1}
+      shift
+      echo "$mOperation, $mName, $mVersion, $mPath"
+    fi
+}
+
+echo ""
+echo "---+++ reading software list +++---"
+while read -r line;
+do
+  # convert line to command-line argument array
+  eval "moduleArray=($line)";
+  read_module "${moduleArray[@]}"
+done
+```
+
