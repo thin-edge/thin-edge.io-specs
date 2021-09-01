@@ -485,8 +485,8 @@ and support all the options for these commands.</li>
 <h3 id="input-output-and-errors"><a class="header" href="#input-output-and-errors">Input, Output and Errors</a></h3>
 <ul>
 <li>The plugins are called by the sm-agent using a child process for each action.</li>
-<li>For the current list of commands there is no input beyond the command arguments,
-and a plugin can close its <code>stdin</code>.</li>
+<li>Beside command <code>update-list</code> there is no input beyond the command arguments, and a plugin that does not 
+implement <code>update-list</code> can close its <code>stdin</code>.</li>
 <li>The <code>stdout</code> and <code>stderr</code> of the process running a plugin command are captured by the sm-agent.
 <ul>
 <li>These streams don't have to be the streams returned by the underlying package manager.
@@ -666,6 +666,91 @@ If the plugin manage concurrent versions, the module <code>foo</code> might stil
 </ul>
 </li>
 </ul>
+<h3 id="the-update-list-command"><a class="header" href="#the-update-list-command">The <code>update-list</code> command</a></h3>
+<p>The <code>update-list</code> command accepts a list of software modules and associated operations as <code>install</code> or <code>remove</code>.</p>
+<p>This basically achieves same purpose as original commands <code>install</code> and <code>remove</code>, but gets passed all software modules to be processed in one command.
+This can be needed when order of processing software modules is relevant - e.g. when dependencies between packages inside the software list do occur.</p>
+<pre><code># building list of software modules and operations, 
+# and passing to plugin's stdin via pipe:
+
+$ echo '\
+install &quot;name1&quot; &quot;version1&quot; &quot;path1&quot;
+install &quot;name2&quot; &quot;version2&quot; &quot;&quot;
+remove  &quot;name3&quot; &quot;version3&quot;
+remove  &quot;some name with spaces&quot; &quot;&quot;' \
+ | plugin update-list
+</code></pre>
+<p>Contract:</p>
+<ul>
+<li>This command is optional for a plugin. It can be implemented alternatively to original commands <code>install</code> and <code>remove</code> as both are specified above.
+<ul>
+<li>If a plugin does not implement this command it must return exit status <code>1</code>. In that case sm-agent will call the plugin again 
+package-by-package using original commands <code>install</code> and <code>remove</code>.</li>
+<li>If a plugin implements this command sm-agent uses it instead of original commands <code>install</code> and <code>remove</code>.</li>
+</ul>
+</li>
+<li>This command takes no commandline arguments, but expects a software list sent from sm-agent to plugin's <code>stdin</code>.</li>
+<li>In the software list each software module is represented by exactly one line. That line is formatted as a usual shell commandline argument list.</li>
+<li>Each of a software module's commandline argument list is treated as shell does, i.E. quotes and escapes can be used.</li>
+<li>The position of each argument in the argument list has it's defined meaning:
+<ul>
+<li>1st argument: Is the operation and can be <code>install</code> or <code>remove</code> </li>
+<li>2nd argument: Is the software module's name.</li>
+<li>3rd argument: Is the software module's version. That argument is optional and can be empty (then empty string &quot;&quot; is used).</li>
+<li>4th argument: Is the software module's path. That argument is optional and can be empty (then empty string &quot;&quot; is used). For operation <code>remove</code> that argument does not exist.</li>
+</ul>
+</li>
+<li>Behaviour of operations <code>install</code> and <code>remove</code> is same as for original commands <code>install</code> and <code>remove</code> as specified above.
+<ul>
+<li>For details about operations' arguments &quot;name&quot;, &quot;version&quot; and &quot;path&quot;, see specification of original command <code>install</code> or <code>remove</code>.</li>
+<li>For details about <code>exitstatus</code> see accoring specification of original command <code>install</code> or <code>remove</code>. </li>
+</ul>
+</li>
+<li>An overall error must be reported (via process's exit status) when at least one software module operation has failed.</li>
+</ul>
+<p>Example how to invoke that plugin command <code>update-list</code>:</p>
+<pre><code>$ plugin update-list &lt;&lt;EOF
+install name1 version1
+install name2 &quot;&quot; path2
+remove &quot;name 3&quot; version3
+remove name4
+EOF
+</code></pre>
+<p>That is equivalent to use of original commands (<code>install</code> and <code>remove</code>):</p>
+<pre><code>$ plugin install name1 --module-version version1
+$ plugin install name2 --module-path path2
+$ plugin remove &quot;name 3&quot; --module-version version3
+$ plugin remove name4
+</code></pre>
+<p>Exemplary implementation of a shell script for parsing software list from <code>stdin</code>:</p>
+<pre><code>#!/bin/sh
+
+read_module() {
+    if [ $# -lt 3 ]
+    then
+      echo &quot;Missing version or path for sw-module '${1}'&quot;
+    else
+      mOperation=${1}
+      shift
+      mName=${1}
+      shift
+      mVersion=${1}
+      shift
+      mPath=${1}
+      shift
+      echo &quot;$mOperation, $mName, $mVersion, $mPath&quot;
+    fi
+}
+
+echo &quot;&quot;
+echo &quot;---+++ reading software list +++---&quot;
+while read -r line;
+do
+  # convert line to command-line argument array
+  eval &quot;moduleArray=($line)&quot;;
+  read_module &quot;${moduleArray[@]}&quot;
+done
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="software-management-agent"><a class="header" href="#software-management-agent">Software Management Agent</a></h1>
 <p>The software management agent (referred to as <code>SM Agent</code> in the rest of this document) is the component that's responsible for the software management operations on a Thin Edge device.
 It primarily interacts with a <code>Cloud Mapper</code> and one or more <code>Software Plugins</code> backed by a software package manager (apt, snap, docker etc).</p>
