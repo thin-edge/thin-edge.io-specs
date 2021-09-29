@@ -55,6 +55,10 @@ Namely, the device capabilities must be delivered to C8Y Mapper in any case.
 Other notes:
 - Collecting all device's capabilities (e.g. SoftwareUpdate, Restart, etc.) are required 
   so that the mapper sends SmartREST `114` with all necessary supported operations.
+- Collecting all capabilities is also required for all child device plugins, to create
+  according child devices in the Cloud (if not yet exist) using automatic device creation
+  on data push. Thereby it is enough to push capabilities to a device that not yet exist 
+  to create that device (using SmartRest `114`).
 - SM Agent might publish more capabilities than C8Y cloud supports. 
   In this case, the mapper doesn't need to subscribe the unsupported capability topics.
 - `c8y_SoftwareUpdate` is supported in c8y version 10.7 and onwards.
@@ -114,5 +118,6 @@ Note:
   Therefore, c8y Mapper should pick up the oldest c8y_SoftwareUpdate operation.
 - C8Y UI blocks to create more than one `c8y_SoftwareUpdate` operation at the same time. 
   However, still user can create more than one operation from REST API.
+  Also for each child-device a parallel operation can be triggered from C8Y UI and REST API.
 - If one operation includes a couple of packages updates, and if one of those package failed, 
   we have to send `FAILED`.
