@@ -10,7 +10,7 @@ Same interface shall be used to push measurement-data to thin-edge device's chil
 ## Interface on local MQTT bus
 
 ### Pushing measurements to thin-edge device object
-**TOPIC:** ```tedge/measurements <thin-edge JSON payload> ```<br/>
+**TOPIC:** ```tedge/measurements```<br/>
 **PAYLOAD:** ```<thin-edge JSON payload>```
 
 Example:
@@ -48,16 +48,19 @@ JSON-via-MQTT message from thin-edge to C8Y.
 **PAYLOAD** 
 ```{
    "type":"ThinEdgeMeasurement",
-   "externalSource": {         // reference for c8y identity API
-      "externalId":"child1",   // to store measurement in object with 
-      "type":"c8y_Serial"      // external ID "child1"
-   },
    "temp": {
       "temp":{
          "value":10.1
       }
    },
-   "time":"2021-10-12T08:18:06.145201746+01:00"
+   "time":"2021-10-12T08:18:06.145201746+01:00",
+   
+   // ----- extension in case of child-device
+   "externalSource": {         // reference for c8y identity API
+      "externalId":"child1",   // to store measurement in object with 
+      "type":"c8y_Serial"      // external ID "child1"
+   },
+   // ----- extension in case of child-device
 }
 ```
 
