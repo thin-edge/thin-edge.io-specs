@@ -2,86 +2,108 @@
 
 ## Support for operations
 
-Supported operations would be a part of tedge config.
+Supported operations would be a part of thin-edge data model and supported by `operation configuration` files in the filesystem.
 
 Supported operations are listed per supported cloud.
 
-Can be modified by hand or using tedge cli tool:
+Supported operations can be modified using tedge cli tool.
 
-* modify fields in `tedge.toml` file:
-  * proposed to use `operations` key in a cloud specific toml table
-  * the key is an `array` of `strings` with *literal values* for supported operations (no further modifications required by users, like prepending cumulocity operations with `c8y_`)
-  * that means that the key operations would exist in the cloud table like so (example for c8y):
+Operations supported by `thin-edge.io` would be stored in the `operations` directory of `thin-edge.io` configuration, it is `/etc/thin-edge/operations` by default.
+Single operation type is expressed by operation configuration file in the filesystem.
+
+Many `thin-edge.io` components can read operation configuration files and use them to perform operations, but only one component should report operations to an external connection (if supported by provider, eg. for c8y cloud it could be mapper).
+
+> Alternatives:
+
+### Option 1
+
+Operations use prefixes to identify the cloud, eg `c8y_SoftwareUpdate`, `az_SoftwareUpdate`.
+
+### Option 2
+
+Per cloud operation is achieved by use of subdirectories, eg `c8y/`, eg: `/etc/tedge/operations/c8y/c8y_SoftwareUpdate` (in this example `c8y_` in the name of operation is required as it is actual name of the operation in c8y, this could be avoided but more on this later), ...
+
+> Done
+
+The user can add operations by adding the operation configuration file to the filesystem at any time of `thin-edge.io` lifecycle.
+
+Configuration files are in toml format and can be empty files denoting no additional configuration or parameters are required (eg, natively supported operations or trivial operations).
+
+The configuration file name is the same as the operation name.
+
+> Consideration: FS permissions, what to set, who should be able to change it?
+
+## Operation configuration
+
+Operations may need to be configured to be executed as intended. For example `c8y_LogfileRequest` requires additional parameter to be set, `log_type` in this case. This can be achieved by adding a configuration settings in the configuration file following the proposed structure.
+
+All operation configuration files are `toml` format.
+
+Some tables are optional, but if present they must be in the following format:
 
 ```toml
-[...]
+[exec]
+  # Exec configuration if the operation requires command execution
+  # Required
+  command = "echo"
+  # Optional
+  args = ["hello"]
+  root = true
 
-[c8y]
-operations = ["c8y_SoftwareUpdate", "...", ...]
+[mqtt]
+  # MQTT configuration if the operation requires MQTT communication, eg forwarding message JSON on the bus
+  # Required
+  topic = "tedge/logs"
+  # Optional
+  broker = "mqtt.tedge.io"
+  port = 1883
+  username = "username"
+  password = "password"
+
+[extras]
+  # Additional configuration if the operation requires additional configuration
+  # Required
+  log_type = ["error"]
+  # Optional
+  log_level = "error"
 ```
 
-Q: How to support parametrized operations / features for operations?
-A1: Maybe use operations name as allowed key in config and allow list of parameters
-A2: Maybe add prefix to the key from above.
+Tables `[exec]` or `[mqtt]` must be present if config is not empty.
+Tables `[exec]` and `[mqtt]` are mutually exclusive and only one of them can be used.
+Table `[noop]` can be introduced for operations that do not require any additional configuration nor additional binary invocations.
 
-```toml
-[...]
+Basic tables names are fixed and are `exec`, `mqtt`, `noop` and `extras`. Additional tables can be added as needed.
 
-[c8y]
-operations = ["c8y_SoftwareUpdate", "...", ...]
-c8y_SoftwareUpdate = [""]
-```
+## Operation invocation
+
+Operations executors, specifically invoked binaries are executed by `thin-edge.io`. As some of these binaries require elevated permissions (eg, sudo), they are executed by `thin-edge.io` as a user with sudo privileges (can be done in indicated in configuration if root required).
+Some operations may be invoked ad-hoc at the operation request and therefore require `exec` table to be present where all if any parameters to the call shall be defined.
+
+Some operations may be long running daemons and therefore may require `mqtt` table to be present.
+
+## `thin-edge.io` tooling for operations management
+
+`thin-edge.io` provides cli tool for operations management.
 
 * use `tedge cli` command to add or remove operations one by one, list all operations, list all operations per cloud
   * use new tedge subcommand `tedge operations`
   * `tedge operations` supports following operations:
-    * `add` cloud_name operation_name - adds single operation to the list if doesn't exist
-    * `remove` cloud_name operation_name - removes single operation from the list if exists
+    * `add cloud_name operation_name [--config configuration_filepath]` - adds single operation to the list if doesn't exist
+    * `remove cloud_name operation_name` - removes single operation from the list if exists
     * `list [cloud_name]` - lists all operations, unless specific cloud table name provided, then lists only operations for the cloud if exists
-  * introduction of a concept for parametrized operations - an operation which requires additional configuration or setting (eg c8y log request also requires supported log types)
-    * `add` param cloud_name parameter_name - adds single parameter to the list if doesn't exist
-    * `remove` param cloud_name parameter_name - remove single parameter to the list if doesn't exist
-    * `list` param [cloud_name]` - lists all parameter, unless specific cloud table name provided, then lists only parameters for the cloud if exists
 
 Eg:
 
-* `tedge operations add c8y c8y_Apama`
-* `tedge operations add c8y c8y_BatchAnalytics`
+* `tedge operations add c8y c8y_Restart`
+* `tedge operations add c8y c8y_LogfileRequest --config ./logfile_config`
+
+* Future extension should provide a tool to create operations configuration files - out of scope for this spec. Some configuration templates are provided in the `thin-edge.io` repository.
 
 Naming and details subject to change and comments.
 
-> Alternative (1)
->
-> * use `tedge cli` command to add or remove operations one by one, list all operations, list all operations per cloud
->   * use tedge subcommand `tedge config`
->   * add new subcommand for `tedge config` to add remove and list:
->     * `tedge config add operations c8y c8y_Apama`
->     * `tedge config remove operations c8y c8y_Apama`
->   * `tedge config` currently supports following operations:
->     * `set`
->     * `unset`
->     * `list` [cloud_name]
->
-> Why this approach:
->
-> * Is consistent with current config API
->
-> Why not this approach:
->
-> * May be confusing
-> * `certificate` subcommand also modifies config
-> * `operations` seems to be specialized similarly to `certificate`
->
-
 ## Use in tedge components
 
-As tedge components use tegde configuration to obtain other settings adding new setting for supported operations seems like a logical step to extend it.
-There is no need to add new API for tedge config as it already supports retrieving values from config file.
-
-tedge config may require extension to support arrays of strings to be retrieved, but this can be achieved without much effort.
-
-Eg:
-tedge c8y mapper can easily obtain list of supported operations from the tedge config interface by calling `tedge_config::query(Setting)` interface.
+`thin-edge.io` mappers should pickup operations per cloud from operations repository (filesystem), but it is recommended to have a central executor like agent to execute them (eg permissions or state control). This way the executor can be configured to use different operations for different components.
 
 ## Persistance
 
@@ -89,9 +111,9 @@ As config is static it will be persistent on the system and will last over reboo
 
 ## Adding supported operations
 
-Using tedge config to add supported operations allows any tedge components (or even any device system component) to extend the list of supported operations on demand. To add or remove supported operations one can either modify tedge.toml file directly or use tedge cli tool:
+Using `tedge cli` to add supported operations allows any tedge components (or even any device system component) to extend the list of supported operations on demand.
 
-`tedge cli` tool can be scripted and therefore when installing new components using tedge software management it could be called as a part of the `finalize` process of the plugin.
+`tedge cli` tool can be scripted and therefore when installing new components using tedge software management the operation it can be added as a part of installation script (eg for apt/deb postinst script may execute necessary steps), or if it is a custom plugin supporting other package the finalize phase could invoke some metadata/postinstall script in the `finalize` phase.
 
 ```shell
 #!/bin/sh
@@ -99,11 +121,7 @@ Using tedge config to add supported operations allows any tedge components (or e
 set -e
 
 tedge operations add c8y c8y_Apama
-tedge operations add c8y c8y_BatchAnalytics
+tedge operations add c8y c8y_BatchAnalytics --config ./batch_analytics_config
 ```
 
-In cases when tedge cli is not installed (currently not an option) one can use direct file modification to add or remove supported operations:
-
-```shell
-add example to add with sed or awk
-```
+In cases when tedge cli is not installed (currently not an option) one can use direct file modification to add or remove supported operations.
