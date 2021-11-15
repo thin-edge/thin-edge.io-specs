@@ -4,6 +4,8 @@
 
 Supported operations would be a part of thin-edge data model and supported by `operation configuration` files in the filesystem.
 
+Many `thin-edge.io` components can read operation configuration files and use them to perform operations, but only one component should report operations to an external connection (if supported by provider, eg. for c8y cloud it could be mapper).
+
 Supported operations are listed per supported cloud.
 
 Supported operations can be modified using tedge cli tool.
@@ -11,19 +13,8 @@ Supported operations can be modified using tedge cli tool.
 Operations supported by `thin-edge.io` would be stored in the `operations` directory of `thin-edge.io` configuration, it is `/etc/thin-edge/operations` by default.
 Single operation type is expressed by operation configuration file in the filesystem.
 
-Many `thin-edge.io` components can read operation configuration files and use them to perform operations, but only one component should report operations to an external connection (if supported by provider, eg. for c8y cloud it could be mapper).
 
-> Alternatives:
-
-### Option 1
-
-Operations use prefixes to identify the cloud, eg `c8y_SoftwareUpdate`, `az_SoftwareUpdate`.
-
-### Option 2
-
-Per cloud operation is achieved by use of subdirectories, eg `c8y/`, eg: `/etc/tedge/operations/c8y/c8y_SoftwareUpdate` (in this example `c8y_` in the name of operation is required as it is actual name of the operation in c8y, this could be avoided but more on this later), ...
-
-> Done
+Per cloud operation is achieved by use of subdirectories, eg `c8y/`, eg: `/etc/tedge/operations/c8y/c8y_SoftwareUpdate` (in this example `c8y_` in the name of operation and is required as it is actual name of the operation in c8y).
 
 The user can add operations by adding the operation configuration file to the filesystem at any time of `thin-edge.io` lifecycle.
 
@@ -47,25 +38,15 @@ Some tables are optional, but if present they must be in the following format:
   # Required
   command = "echo"
   # Optional
-  args = ["hello"]
   root = true
 
 [mqtt]
   # MQTT configuration if the operation requires MQTT communication, eg forwarding message JSON on the bus
-  # Required
   topic = "tedge/logs"
-  # Optional
-  broker = "mqtt.tedge.io"
-  port = 1883
-  username = "username"
-  password = "password"
 
 [extras]
   # Additional configuration if the operation requires additional configuration
-  # Required
   log_type = ["error"]
-  # Optional
-  log_level = "error"
 ```
 
 Tables `[exec]` or `[mqtt]` must be present if config is not empty.
