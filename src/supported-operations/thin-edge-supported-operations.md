@@ -4,22 +4,22 @@
 
 Supported operations would be a part of thin-edge data model and supported by `operation configuration` files in the filesystem.
 
-Many `thin-edge.io` components can read operation files and use them to perform operations, but only one component should report operations to an external connection (if supported by provider, e.g. for c8y cloud it could be mapper).
+Many `thin-edge.io` components can read operation files and use them to perform operations, but only one component shall report operations to an external connection (if supported by provider, e.g. for c8y cloud it shall be the mapper).
 
 Supported operations are listed per supported cloud.
 
-Supported operations can be modified using tedge cli tool.
+Supported operations can be modified using `tedge cli` tool.
 
-Operations supported by `thin-edge.io` would be stored in the `operations` directory of `thin-edge.io` configuration, it is `/etc/thin-edge/operations` by default.
-Only one operation type can be expressed by each operation file in the filesystem.
+Operations supported by `thin-edge.io` shall be stored in the `operations` directory of `thin-edge.io` configuration, it is `/etc/thin-edge/operations` by default.
+Exactly one operation type shall be expressed by each operation file in the filesystem.
 
-Per cloud operations are achieved by use of subdirectories, e.g. `c8y/` for cumulocity, e.g.: `/etc/tedge/operations/c8y/c8y_SoftwareUpdate` (in this example `c8y_` in the name of operation and is required as it is actual name of the operation in c8y).
+Per cloud operations are achieved by use of subdirectories, e.g. `c8y/` for Cumulocity IoT, e.g.: `/etc/tedge/operations/c8y/c8y_SoftwareUpdate` (in this example `c8y_` in the name of operation and is required as it is actual name of the operation in c8y).
 
 The user can add operations by adding the operation file to the filesystem at any time of `thin-edge.io` lifecycle.
 
 Operation files are in `toml` format and can be empty files denoting no additional configuration or parameters are required (e.g. natively supported operations or trivial operations).
 
-The operation file name is the same as the operation name.
+The operation file name is the same as the operation name as it is used to determine the exact value to be forwarded to the cloud.
 
 > Consideration: FS permissions, what to set, who should be able to change it?
 
@@ -141,10 +141,16 @@ Basic tables names are fixed and are `exec`, `mqtt`, `noop` and `extras`. Additi
 
 ## Operation invocation
 
-Operations executors, specifically invoked binaries are executed by `thin-edge.io`. As some of these binaries require elevated permissions (eg, sudo), they are executed by `thin-edge.io` as a user with sudo privileges (can be done in indicated in configuration if root required).
+Operations executors, specifically invoked binaries are executed by `thin-edge.io`. As some of these binaries require elevated permissions (e.g. sudo), they are executed by `thin-edge.io` as a user with sudo privileges (can be indicated in configuration if root is required).
 Some operations may be invoked ad-hoc at the operation request and therefore require `exec` table to be present where all if any parameters to the call shall be defined.
 
 Some operations may be long running daemons and therefore may require `mqtt` table to be present.
+
+> Considerations: How to pass parameters to the operation, e.g. expected operation remote access requires the device to connect to a specific websocket and it's URL is passed as part of the operation message and needs to be passed to the executing binary?
+>
+> * Is adding schema to the operation message required? This adds significant amount of complexity to the message format and it's not clear how to pass parameters to the operation.
+> * Is hardcoding the operation message format required? Can this be a quick fix for drop 1?
+> * Should operations executor be able to accept plain parameters and is it safe?
 
 ## `thin-edge.io` tooling for operations management
 
@@ -162,23 +168,28 @@ e.g.:
 * `tedge operations add c8y c8y_Restart`
 * `tedge operations add c8y c8y_LogfileRequest --config ./logfile_config`
 
-* Future extension should provide a tool to create operations files - out of scope for this spec. Some configuration templates are provided in the `thin-edge.io` repository.
+* Future extension should provide a tool to create operations files - OUT OF SCOPE.
+* Some configuration templates are going to be provided in the `thin-edge.io` repository.
 
 Naming and details subject to change and comments.
 
 ## Use in tedge components
 
-`thin-edge.io` mappers should pickup operations per cloud from operations repository (filesystem), but it is recommended to have a central executor like agent to execute them (e.g. permissions or state control). This way the executor can be configured to use different operations for different components.
+`thin-edge.io` mappers should pickup operations per cloud from operations repository (filesystem), but an executor like agent to should be provided to execute them (e.g. permissions or state control). This way the executor can be configured to use different operations for different components.
 
 ## Persistance
 
-As config is static it will be persistent on the system and will last over reboots and power downs.
+As thin-edge.io configuration directory shall be installed in static storage supported operations will be persistent on the system and will last over reboots and power downs.
 
 ## Adding supported operations
 
+### Adding supported operations remotely
+
 Using `tedge cli` to add supported operations allows any tedge components (or even any device system component) to extend the list of supported operations on demand.
 
-`tedge cli` tool can be scripted and therefore when installing new components using tedge software management the operation it can be added as a part of installation script (e.g. for apt/deb postinst script may execute necessary steps), or if it is a custom plugin supporting other package the finalize phase could invoke some metadata/postinstall script in the `finalize` phase.
+`tedge cli` tool can be scripted and therefore when installing new components using thin-edge.io software management supported operations can be added as a part of installation script (e.g. for apt/deb `postinst` script may execute necessary steps), or if it is a custom plugin supporting other package the finalize phase could invoke some metadata/postinstall script in the `finalize` phase.
+
+> Add paragraph about how operations will be reloaded after new operations are added, e.g. which components is responsible for mapper/bridge restart etc.
 
 ```shell
 #!/bin/sh
@@ -189,4 +200,4 @@ tedge operations add c8y c8y_Apama
 tedge operations add c8y c8y_BatchAnalytics --config ./batch_analytics_config
 ```
 
-In cases when tedge cli is not installed (currently not an option) one can use direct file modification to add or remove supported operations.
+> Note: In cases when tedge cli is not installed (currently not an option) one can use direct file modification to add or remove supported operations.
