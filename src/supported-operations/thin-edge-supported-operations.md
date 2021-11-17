@@ -59,12 +59,23 @@ With the operation file the following structure is written:
 [exec]
 
 command = "/etc/tedge/plugins/c8y_LogfileRequest"
-root = true
+user = "root"
+
+[init]
+topic = "c8y/s/us"
+message = "116,error"
 
 [extras]
   # Additional configuration if the operation requires additional configuration
   log_type = ["error"]
 ```
+
+> Alternatives:
+>
+> Option 1: on init of mapper config will contain a command to be called e.g. sent `log_type` message to c8y, only the component knows about it (mapper doesn't need to care about it)
+> Option 2: explicit additional message to be send by the mapper if required/defined using a table in config file e.g. `[init]` like in the example above.
+>
+> Done
 
 Given a mapper the flow would be as follows:
 
@@ -135,9 +146,10 @@ $ ls -l /etc/tegde/operations/c8y
 
 Tables `[exec]` or `[mqtt]` must be present if config is not empty.
 Tables `[exec]` and `[mqtt]` are mutually exclusive and only one of them can be used.
-Table `[noop]` can be introduced for operations that do not require any additional configuration nor additional binary invocations.
 
-Basic tables names are fixed and are `exec`, `mqtt`, `noop` and `extras`. Additional tables can be added as needed.
+If operation doesn't require additional configuration an empty `toml` file can be used.
+
+Basic tables names are fixed and are `exec`, `mqtt` and `extras`. Additional tables can be added as needed.
 
 ## Operation invocation
 
@@ -146,11 +158,11 @@ Some operations may be invoked ad-hoc at the operation request and therefore req
 
 Some operations may be long running daemons and therefore may require `mqtt` table to be present.
 
-> Considerations: How to pass parameters to the operation, e.g. expected operation remote access requires the device to connect to a specific websocket and it's URL is passed as part of the operation message and needs to be passed to the executing binary?
+> Q: How to pass parameters to the operation, e.g. expected operation remote access requires the device to connect to a specific websocket and it's URL is passed as part of the operation message and needs to be passed to the executing binary?
+> A: For not native / in-built operations pass the whole message from the cloud as the contract implies that the operation executable will know what to do with it.
 >
-> * Is adding schema to the operation message required? This adds significant amount of complexity to the message format and it's not clear how to pass parameters to the operation.
-> * Is hardcoding the operation message format required? Can this be a quick fix for drop 1?
-> * Should operations executor be able to accept plain parameters and is it safe?
+> * We could have regex for the topic/topic+message to match the operation and wake appropriate executor?
+> * Should operations executor be able to accept plain parameters and is it safe? Security considerations.
 
 ## `thin-edge.io` tooling for operations management
 
