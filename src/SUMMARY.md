@@ -5,6 +5,10 @@
     - [Thin Edge Json](telemetry-data/thin-edge-json.md)
     - [MQTT Bus](telemetry-data/mqtt-bus.md)
 
+## Operations
+- [Operations](supported-operations/README.md)
+    - [Adding new operations](supported-operations/thin-edge-supported-operations.md)
+
 ## Software management
 - [Software management](software-management/README.md)
     - [Use-Case Update Software-List](software-management/usecase-update-swlist.md )
