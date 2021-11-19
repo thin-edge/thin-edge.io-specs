@@ -22,4 +22,5 @@ On a device, an operation is materialized by an executable that interacts with t
 TOC:
 * [Requirements](./requirements.md)
 * [Principles](./principles.md)
-* [Adding new operations](./thin-edge-supported-operations.md)
+* [Examples](./thin-edge-supported-operations.md)
+* [Command line support](./command-line-support.md)
