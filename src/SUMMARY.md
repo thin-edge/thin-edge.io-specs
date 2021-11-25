@@ -5,6 +5,9 @@
     - [Thin Edge Json](telemetry-data/thin-edge-json.md)
     - [MQTT Bus](telemetry-data/mqtt-bus.md)
 
+## Alarms
+- [Alarm Handling](alarms/alarm-handling.md)
+
 ## Software management
 - [Software management](software-management/README.md)
     - [Use-Case Update Software-List](software-management/usecase-update-swlist.md )
