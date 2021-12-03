@@ -58,13 +58,13 @@ Payload: {
 }
 ```
 
+NOTE: The sub-topic `childs` can not be used as type-string, since it is reseved for child-device addressing (see below).
+
 **Adressing Child-Devices:**
-To address alarms to a child-device the sub-topic `childs` followed by the "child-device id" have to be used as below:
+To address an alarm to a child-device the sub-topic `childs` followed by the child's device id has to be used as below:
 ```
 Child-Device Topics:   tedge/alarms/childs/<child-device id>/<severity-string>/<type-string>
 ```
-
-NOTE: The "device-id" indicates whether it is an alarm of the thin-edge device it-self (root-device) or a child-device. Use "root" for the thin-edge device or the child-device id for the according child-device.
 
 Benefit to have "severity" and "type-string" as topics:
 Device-Site reactions to alarm could be easier relized.<br/>
@@ -85,9 +85,12 @@ Additionally an also supported "raw"-payload format will allow easy adoption for
 
 **Raw payload format:**
 ```
-Topic:   tedge/alarms/<device-id>/<severity-string>/<type-string>
+Topic:   tedge/alarms/<severity-string>/<type-string>
 Payload: <message-string>
 ```
+
+NOTE: Child-device addressing works in the same way as for the JSON payload format above.
+
 In raw format for missing fields default values are used as below: 
    - "status" := "ACTIVE", if payload is not empty; "CLEARED", if payload empty
    - "time" := set to current local time when picked-up by mapper
