@@ -54,7 +54,7 @@ user = "root"
 
 [init]
 topic = "c8y/s/us"
-message = "116,error"
+message = "118,error"
 
 [extras]
   # Additional configuration if the operation requires additional configuration
