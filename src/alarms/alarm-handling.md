@@ -37,7 +37,7 @@ Figure below illustrates the data flow from Customer Application broker/thin-edg
 |---------------|
 | Thin-edge shall transfer most recent state of an alarm to the cloud. |
 | Other local components (as local processes or connected clients) can consume alarm-states from thin-edge by subscribing local broker topics. A local consumer can be made to process full alarm-state history by using "Clean Start Flag=0", a constant "client Id" and "QOS>0". |
-| The same alarm-state message shall be transfered just once to the cloud.<br/>An alarm-state message is treated as different when at least one field (see section 'Information Set per Alarm' above) in the message differs to the message before.<br/>Hint: Some mapper-specific topic can be used (retained and persisted) to store messages that were already transfered to cloud (e.g. `mapper/c8y/ack/alarms/<alarm>`). |
+| The same alarm-state message shall be transfered just once to the cloud.<br/>An alarm-state message is treated as different when at least one field (see section 'Information Set per Alarm' above) in the message differs to the message before.<br/>To avoid duplicates some mapper-specific topic shall be used (retained) to store and identify messages that were already transfered to the cloud (e.g. `mapper/c8y/ack/alarms/<alarm>`). |
 
 
 # Public MQTT-based alarm interface
@@ -92,7 +92,8 @@ Payload: <message-string>
 NOTE: Child-device addressing works in the same way as for the JSON payload format above.
 
 In raw format for missing fields default values are used as below: 
-   - "status" := "ACTIVE", if payload is not empty; "CLEARED", if payload empty
+   - "status" := "ACTIVE", if payload is not empty; "CLEARED", if payload empty<br/>
+     NOTE: By nature of MQTT a message with empty payload will not be retained by the broker. However the mapper will store already transfered messages for de-duplication purpose anyway (see requirements above). Using that information mapper is in case of restart able to detect any not yet sent empty message.
    - "time" := set to current local time when picked-up by mapper
 
 Benefit to support "raw payload format":
