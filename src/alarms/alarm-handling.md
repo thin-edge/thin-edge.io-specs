@@ -16,7 +16,7 @@ The specified alarm attributes below are inspired by cumulocity data model for a
 
 | Name              | Description   |
 | ----------------- |---------------|
-| ref-string        | Device-unique reference string (kind of alarm ID or alarm name), used to reference the once occured alarm again, e.g. in case of updates (e.g. "temperature_sensor_loss") |
+| type-string       | Device-unique type string (kind of alarm ID or alarm name), used to reference the once occured alarm again, e.g. in case of updates (e.g. "temperature_sensor_loss") |
 | message-string    | Human readable short information about alarm reason (e.g. "Temperature sensor does not respond") |
 | severity-string   | Could be "CRITICAL", "MAJOR", "MINOR" or "WARNING" |
 | status-string     | Could be "ACTIVE" or "CLEARED"<br/>
@@ -36,8 +36,8 @@ Figure below illustrates the data flow from Customer Application broker/thin-edg
 |   |
 |---------------|
 | Thin-edge shall transfer most recent state of an alarm to the cloud. |
-| Other local components (as local processes or connected clients) can consume alarm-states from thin-edge by subscribing local broker topics. The local consumer can be made to process full alarm-state history by using "QOS>0" in addition to "Retain". |
-| The same alarm-state message shall be transfered just once to the cloud.<br/>An alarm-state message is treated as different when at least one field (see section 'Information Set per Alarm' above) in the message differs to the message before.<br/>Hint: Some mapper-specifics topic can be used (retained and persisted) to store messages that were already transfered to cloud (e.g. `mapper/c8y/ack/alarms/<alarm>`). |
+| Other local components (as local processes or connected clients) can consume alarm-states from thin-edge by subscribing local broker topics. A local consumer can be made to process full alarm-state history by using "Clean Start Flag=0", a constant "client Id" and "QOS>0". |
+| The same alarm-state message shall be transfered just once to the cloud.<br/>An alarm-state message is treated as different when at least one field (see section 'Information Set per Alarm' above) in the message differs to the message before.<br/>Hint: Some mapper-specific topic can be used (retained and persisted) to store messages that were already transfered to cloud (e.g. `mapper/c8y/ack/alarms/<alarm>`). |
 
 
 # Public MQTT-based alarm interface
@@ -46,11 +46,11 @@ Similar to thin-edge'S measurement interface, alarm interface is based on MQTT t
 
 ## Topic structure and payload
 
-Proposal to have "severity" and "ref-string" as topics:
+Proposal to have "severity" and "type-string" as topics:
 
 **thin-edge JSON (alarm) format:**
 ```
-Topic:   tedge/alarms/<device-id>/<severity-string>/<ref-string>
+Topic:   tedge/alarms/<severity-string>/<type-string>
 Payload: {
   "message":  <message-string>,
   "status":   <status-string>,  
@@ -58,9 +58,15 @@ Payload: {
 }
 ```
 
+**Adressing Child-Devices:**
+To address alarms to a child-device the sub-topic `childs` followed by the "child-device id" have to be used as below:
+```
+Child-Device Topics:   tedge/alarms/childs/<child-device id>/<severity-string>/<type-string>
+```
+
 NOTE: The "device-id" indicates whether it is an alarm of the thin-edge device it-self (root-device) or a child-device. Use "root" for the thin-edge device or the child-device id for the according child-device.
 
-Benefit to have "severity" and "ref-string" as topics:
+Benefit to have "severity" and "type-string" as topics:
 Device-Site reactions to alarm could be easier relized.<br/>
 Examples:
 ```
@@ -79,7 +85,7 @@ Additionally an also supported "raw"-payload format will allow easy adoption for
 
 **Raw payload format:**
 ```
-Topic:   tedge/alarms/<device-id>/<severity-string>/<ref-string>
+Topic:   tedge/alarms/<device-id>/<severity-string>/<type-string>
 Payload: <message-string>
 ```
 In raw format for missing fields default values are used as below: 
