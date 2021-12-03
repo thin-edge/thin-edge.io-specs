@@ -58,10 +58,8 @@ Payload: {
 }
 ```
 
-NOTE: The sub-topic `childs` can not be used as type-string, since it is reserved for child-device addressing (see below).
-
 **Addressing Child-Devices:**
-To address an alarm to a child-device the sub-topic `childs` followed by the child's device id has to be used as below:
+To address an alarm to a child-device the sub-topic `childs` followed by the child's "device id" has to be used as below:
 ```
 Child-Device Topics:   tedge/alarms/childs/<child-device id>/<severity-string>/<type-string>
 ```
