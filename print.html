@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="software-management/index.html"><strong aria-hidden="true">2.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="software-management/usecase-update-swlist.html"><strong aria-hidden="true">2.1.</strong> Use-Case Update Software-List</a></li><li class="chapter-item expanded "><a href="software-management/plugin-api.html"><strong aria-hidden="true">2.2.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="software-management/sm-agent.html"><strong aria-hidden="true">2.3.</strong> Software Management Agent</a></li><li class="chapter-item expanded "><a href="software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">2.4.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">2.5.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li><li class="chapter-item expanded "><a href="decisions/open-decisions.html"><strong aria-hidden="true">3.</strong> Open Decisions</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="supported-operations/index.html"><strong aria-hidden="true">2.</strong> Operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="supported-operations/requirements.html"><strong aria-hidden="true">2.1.</strong> Requirements</a></li><li class="chapter-item expanded "><a href="supported-operations/principles.html"><strong aria-hidden="true">2.2.</strong> Principles</a></li><li class="chapter-item expanded "><a href="supported-operations/thin-edge-supported-operations.html"><strong aria-hidden="true">2.3.</strong> Examples</a></li><li class="chapter-item expanded "><a href="supported-operations/command-line-support.html"><strong aria-hidden="true">2.4.</strong> Command line support</a></li></ol></li><li class="chapter-item expanded "><a href="software-management/index.html"><strong aria-hidden="true">3.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="software-management/usecase-update-swlist.html"><strong aria-hidden="true">3.1.</strong> Use-Case Update Software-List</a></li><li class="chapter-item expanded "><a href="software-management/plugin-api.html"><strong aria-hidden="true">3.2.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="software-management/sm-agent.html"><strong aria-hidden="true">3.3.</strong> Software Management Agent</a></li><li class="chapter-item expanded "><a href="software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">3.4.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">3.5.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li><li class="chapter-item expanded "><a href="decisions/open-decisions.html"><strong aria-hidden="true">4.</strong> Open Decisions</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -302,6 +302,323 @@ with the help of a <em>mapper</em> component designed for that cloud.
 The responsibility of a mapper is to subscribe to the <code>tedge/measurements</code> topic to receive all incoming measurements 
 represented in the cloud vendor neutral Thin Edge JSON format, to a format that the connected cloud understands.
 Refer to <a href="telemetry-data/./mapper.html">Cloud Message Mapper Architecture</a> for more details on the mapper component.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="extensible-support-of-operations"><a class="header" href="#extensible-support-of-operations">Extensible support of operations</a></h1>
+<p>The main features of thin-edge can be extended with plugins that provide specific support for new operations,
+that can be then triggered from the cloud or from other components.</p>
+<p>An operation can be as simple as executing ad-hoc commands or as complex as installing new software versions
+on the thin-edge device. Other examples are the abilities to upload log files
+or to open an ssh-tunnel from the cloud to the device.</p>
+<p>On a device, an operation is materialized by an executable that interacts with the cloud end-point via thin-edge.</p>
+<ul>
+<li>Some operations are provided by thin-edge (for instance <em>Software Management</em>).</li>
+<li>New operations can be added by tier parties using any programming language.</li>
+<li>In order to be open and flexible, thin-edge sets no constraint on the protocol
+used by a plugin to interact with the cloud and the device local services.</li>
+<li>For each supported cloud, Thin-edge provides the mechanisms:
+<ul>
+<li>to register operation plugins on the device,</li>
+<li>to notify the connected cloud instance with the set of operations supported by the device,</li>
+<li>to notify the appropriate operation plugin when an operation request is triggered from the cloud.</li>
+</ul>
+</li>
+<li>The implementation of an operation might be cloud specific or not.
+<ul>
+<li>If not, the implementation has to provide protocol-translation mechanisms around the main operation mechanism.</li>
+</ul>
+</li>
+</ul>
+<p>TOC:</p>
+<ul>
+<li><a href="supported-operations/./requirements.html">Requirements</a></li>
+<li><a href="supported-operations/./principles.html">Principles</a></li>
+<li><a href="supported-operations/./thin-edge-supported-operations.html">Examples</a></li>
+<li><a href="supported-operations/./command-line-support.html">Command line support</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="requirements-for-operation-support"><a class="header" href="#requirements-for-operation-support">Requirements for Operation Support</a></h1>
+<h2 id="use-cases"><a class="header" href="#use-cases">Use cases</a></h2>
+<ul>
+<li>One should be able to add new features to thin-edge with operation plugins.</li>
+<li>An operation can be as simple as executing ad-hoc commands on behalf of a remote use
+or as complex as installing new software versions on the thin-edge device.</li>
+</ul>
+<h2 id="extensibility"><a class="header" href="#extensibility">Extensibility</a></h2>
+<ul>
+<li>Thin-edge should be liberal on the use-cases for an operation plugin.</li>
+<li>No constraint on the programming language.</li>
+<li>An operation plugin can be provided by thin-edge or a tier party.</li>
+</ul>
+<h2 id="cloud-specificities"><a class="header" href="#cloud-specificities">Cloud specificities</a></h2>
+<ul>
+<li>An operation plugin can be cloud specific or not.</li>
+<li>Each cloud mapper might need specific supports from the plugins (e.g reporting the operation progress and status).</li>
+<li>Each cloud mapper might provide specific supports to the plugins (e.g appropriate bridge topics).</li>
+<li>An operation might make sense only on a specific cloud.</li>
+</ul>
+<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<ul>
+<li>Declaring a new operation must be scriptable, notably to be added in installation scripts.</li>
+<li>The set of installed operations must persist and last over reboots and power downs.</li>
+<li>The device owner can add and remove operations at any time of the device lifecycle,
+thin-edge must trigger in the background any necessary registration and initialisation.</li>
+<li>Thin-edge should provide a support to enforce the installation constraints,
+notably only one plugin should be installed for a given operation for a given cloud.</li>
+<li>Some operations may need to be configured.
+For example, <code>c8y_LogfileRequest</code> requires additional parameter to be set, <code>log_type</code> in this case.</li>
+<li>Some operations may require elevated permissions to be executed (e.g. sudo),
+and thin-edge must then provide the mechanisms to run this operation accordingly.</li>
+</ul>
+<h2 id="discovery"><a class="header" href="#discovery">Discovery</a></h2>
+<ul>
+<li>Thin-edge should be able to list all the available operations on a device.</li>
+<li>Supported operations are to be grouped per supported cloud.</li>
+<li>Only one component shall report the set of available operations to the cloud.</li>
+</ul>
+<h2 id="invocation"><a class="header" href="#invocation">Invocation</a></h2>
+<ul>
+<li>This is an implementor choice to run an operation plugin as a daemon or on request.</li>
+<li>If run as a daemon, it must even be feasible to only declare the operation to thin-edge (on doing so to the cloud),
+and to let the daemon managing the entire protocol for that operation.
+The typical example here is the <code>c8y-sm</code> mapper which handles the Software Management operations for Cumulocity.</li>
+<li>If run on request, one must be able to declare <em>when</em> the operation will be triggered (on which event),
+and <em>how</em> (notably with which parameters).</li>
+</ul>
+<h2 id="cli-support"><a class="header" href="#cli-support">CLI support</a></h2>
+<ul>
+<li>It would be convenient to manage the set of supported operations using the <code>tedge cli</code> tool.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="proposal"><a class="header" href="#proposal">Proposal</a></h2>
+<ul>
+<li>An operation is implemented by an executable that is responsible for:
+<ul>
+<li>the interactions with the cloud (using the locally bridged MQTT topics),</li>
+<li>requesting any required parameters,</li>
+<li>reporting the operation progress,</li>
+<li>returning any expected results.</li>
+</ul>
+</li>
+<li>On installation, an operation is declared to thin-edge using a configuration file put in an operation directory.
+<ul>
+<li>This directory is organized in sub-directories per cloud and per operation.</li>
+<li>Each operation is represented by a configuration file (using the TOML file format).</li>
+<li>
+<pre><code class="language-shell">$ ls -l /etc/tegde/operations/c8y
+-rw-rw-r-- 1 user user    688 Jan 1 00:01 c8y_LogfileRequest
+-rw-rw-r-- 1 user user    331 Jan 1 00:01 c8y_SoftwareUpdate
+-rw-rw-r-- 1 user user     40 Jan 1 00:01 c8y_Restart
+</code></pre>
+</li>
+</ul>
+</li>
+<li>An operation might run independently of thin-edge.
+<ul>
+<li>In that case, the operation plugin has to run as a daemon (listening for requests)
+and ensure that this daemon is enabled of device re-start.</li>
+<li>The operation daemon is responsible for triggering the operations.</li>
+<li>For thin-edge, the operation just needs to be declared using an empty TOML file. </li>
+<li>Thin-edge is only responsible for notifying that the operation is available.</li>
+</ul>
+</li>
+<li>An operation might be executed on request.
+<ul>
+<li>Thin-edge is then responsible for listening for requests and spawning processes to handle these.</li>
+<li>The operation configuration provide the topic and the pattern matching the awaking events.</li>
+<li>Which command to run is specified by the plugin configuration file.</li>
+<li>Similarly, the configuration file specifies on behalf of which user the plugin command has to be run.</li>
+<li>
+<pre><code class="language-toml">[exec]
+topic = &quot;c8y/s/ds&quot;
+on_message = &quot;522,*&quot;
+command = &quot;/etc/tedge/plugins/c8y_LogfileRequest&quot;
+user = &quot;root&quot;
+</code></pre>
+</li>
+</ul>
+</li>
+<li>Note that the interpretation of these configuration files is cloud specific.
+<ul>
+<li>The above examples are Cumulocity specific.
+<ul>
+<li>See <a href="https://cumulocity.com/guides/device-sdk/mqtt/#subscribe-templates">SmartRest2 operation templates</a> for details.</li>
+</ul>
+</li>
+<li>The <code>c8y</code> mapper needs to know that the file names under <code>/etc/tegde/operations/c8y</code> are Cumulocity operation names
+that have to be declared using a <code>114</code> smartRest request.</li>
+<li>The <code>c8y</code> mapper needs also to know the <code>c8y_LogfileRequest</code> plugin has to be awaken.</li>
+</ul>
+</li>
+</ul>
+<h3 id="to-be-clarified"><a class="header" href="#to-be-clarified">To be clarified</a></h3>
+<ul>
+<li>Configuration file permissions, what to set, who should be able to change it?</li>
+<li>How the set of operations is reloaded after a new operation has been added?</li>
+<li>Which component is responsible for executing the operation command for a request?
+<ul>
+<li>The c8y mapper is definitely the component that has to listen for requests
+and to translate operation requests into plugin commands.
+But, it would be better to have the agent dealing with command execution and monitoring.
+The price to pay is a new indirection level (similar to what is done between the sm-c8y mapper and the agent).</li>
+</ul>
+</li>
+<li>How to pass parameters to the operation?
+<ul>
+<li>e.g. a remote access operation requires the device to connect to a specific websocket
+and it's URL is passed as part of the operation message and needs to be passed to the executing binary.</li>
+<li>An option is to pass the whole message from the cloud as the contract implies
+that the operation executable will know what to do with it.</li>
+</ul>
+</li>
+<li>We could have regex for the topic/topic+message to match the operation and wake appropriate executor?</li>
+<li>Should operations executor be able to accept plain parameters and is it safe? Security considerations.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="operation-configuration-examples"><a class="header" href="#operation-configuration-examples">Operation Configuration Examples</a></h1>
+<p>All operation configuration files use the <code>toml</code> format.</p>
+<pre><code class="language-toml">[exec]
+  # Exec configuration if the operation requires command execution
+  # Required
+  command = &quot;echo&quot;
+  # Optional
+  root = true
+
+[mqtt]
+  # MQTT configuration if the operation requires MQTT communication, e.g. forwarding message JSON on the bus
+  topic = &quot;tedge/logs&quot;
+
+[extras]
+  # Additional configuration if the operation requires additional configuration
+  log_type = [&quot;error&quot;]
+</code></pre>
+<ul>
+<li>If the operation doesn't require additional configuration, an empty <code>toml</code> file can be used.</li>
+<li>Basic tables names are fixed and are <code>exec</code>, <code>mqtt</code> and <code>extras</code>. Additional tables can be added as needed.</li>
+<li>Tables <code>[exec]</code> or <code>[mqtt]</code> must be present if config is not empty.</li>
+<li>Tables <code>[exec]</code> and <code>[mqtt]</code> are mutually exclusive and only one of them can be used.</li>
+</ul>
+<h2 id="example-1"><a class="header" href="#example-1">Example 1</a></h2>
+<p>Given operation <code>restart</code>, the operation file would be created in <code>/etc/tegde/operations/c8y</code> with the filename <code>c8y_Restart</code> so the full path would be <code>/etc/tegde/operations/c8y/c8y_Restart</code>.
+Assuming <code>restart</code> operation requires no additional parameters as well as can be executed directly in the executor (assume a mapper) no additional configuration is required.</p>
+<p>An empty <code>toml</code> file is still valid <code>toml</code> file and can be used to indicate no additional configuration is required.</p>
+<p>Given a mapper the flow would be as follows:</p>
+<ol>
+<li>Mapper reads directory for the cloud which it supports i.e. <code>/etc/tegde/operations/c8y</code>.</li>
+<li>Mapper finds the operation file for the operation <code>restart</code> in the directory <code>c8y</code> with filename <code>c8y_Restart</code> which is the only operation.</li>
+<li>Mapper takes the filename as operation name and reads the operation file.</li>
+<li>Empty operation file means there are no additional configuration parameters and mapper is ready to send supported operations message to c8y which contains the list of supported operations i.e. <code>c8y_Restart</code>.</li>
+<li>Cloud operator wants restart the device therefore they send the operation message to the device which mapper interprets as a restart operation and mapper executes restart.</li>
+</ol>
+<h2 id="example-2-special-case"><a class="header" href="#example-2-special-case">Example 2 (special case)</a></h2>
+<p>Given operation <code>c8y_LogfileRequest</code>, the operation file would be created in <code>/etc/tegde/operations/c8y</code> with the filename <code>c8y_LogfileRequest</code> so the full path would be <code>/etc/tegde/operations/c8y/c8y_LogfileRequest</code>.
+Operation <code>c8y_LogfileRequest</code> requires additional parameter <code>log_type</code> to be set.</p>
+<p>With the operation file the following structure is written:</p>
+<pre><code class="language-toml">[exec]
+
+command = &quot;/etc/tedge/plugins/c8y_LogfileRequest&quot;
+user = &quot;root&quot;
+
+[init]
+topic = &quot;c8y/s/us&quot;
+message = &quot;118,error&quot;
+
+[extras]
+  # Additional configuration if the operation requires additional configuration
+  log_type = [&quot;error&quot;]
+</code></pre>
+<blockquote>
+<p>Alternatives:</p>
+<p>Option 1: on init of mapper config will contain a command to be called e.g. sent <code>log_type</code> message to c8y, only the component knows about it (mapper doesn't need to care about it)
+Option 2: explicit additional message to be send by the mapper if required/defined using a table in config file e.g. <code>[init]</code> like in the example above.</p>
+<p>Done</p>
+</blockquote>
+<p>Given a mapper the flow would be as follows:</p>
+<ol>
+<li>Mapper reads directory for the cloud which it supports i.e. <code>/etc/tegde/operations/c8y</code>.</li>
+<li>Mapper finds the operation file for the operation <code>c8y_LogfileRequest</code> in the directory <code>c8y</code> with filename <code>c8y_LogfileRequest</code> which is the only operation.</li>
+<li>Mapper takes the filename as operation name and reads the operation file.</li>
+<li>Operation file contains additional configuration parameters and mapper shall know (i.e. implements) how to interpret the configuration (in this case mapper has to add new fragment to the device type therefore can read the <code>log_type</code> configuration and send new <code>log_type</code> message) ready to send supported operations message to c8y which contains the list of supported operations i.e. <code>c8y_LogfileRequest</code>. E.g. <code>114,c8y_LogfileRequest</code></li>
+<li>Cloud operator wants to retrieve logs from the device therefore they send the operation message to the device which mapper interprets as a <code>c8y_LogfileRequest</code> operation and mapper executes <code>c8y_LogfileRequest</code>.</li>
+</ol>
+<h2 id="example-3"><a class="header" href="#example-3">Example 3</a></h2>
+<p>Given an operation which requires communication with another component over the bus e.g. <code>c8y_SoftwareUpdate</code> and no additional configuration is required.</p>
+<p>Following operation file could be used:</p>
+<pre><code class="language-toml">[mqtt]
+
+request = &quot;tedge/commands/req/software/update&quot;
+response = &quot;tedge/commands/res/software/update&quot;
+</code></pre>
+<ol>
+<li>Mapper reads directory for the cloud which it supports i.e. <code>/etc/tegde/operations/c8y</code>.</li>
+<li>Mapper finds the operation file for the operation <code>c8y_SoftwareUpdate</code> in the directory <code>c8y</code> with filename <code>c8y_SoftwareUpdate</code> which is the only operation.</li>
+<li>Mapper takes the filename as operation name and reads the operation file.</li>
+<li>Operation file contains additional configuration parameters and mapper shall know (i.e. implements) how to interpret the configuration (in this case mapper has to forward the request to an executor on the bus) ready to send supported operations message to c8y which contains the list of supported operations i.e. <code>c8y_SoftwareUpdate</code>. E.g. <code>114,c8y_SoftwareList</code></li>
+<li>From this point mapper should subscribe to the provided response topic: <code>tedge/commands/res/software/update</code>.</li>
+<li>From this point whenever mapper receives a request for the operation <code>c8y_SoftwareUpdate</code> it shall forward the request to the executor on the bus on provided topic: <code>tedge/commands/req/software/update</code> and would expect a response on the provided topic: <code>tedge/commands/res/software/update</code>.</li>
+<li>Cloud operator wants to update software on the device therefore they send the operation message to the device which mapper interprets as a <code>c8y_SoftwareUpdate</code> operation and mapper forwards the operation request to an executor (in this case the agent) on provided topic <code>tedge/commands/req/software/update</code>.</li>
+<li>Executor processes the request and sends a response on provided topic <code>tedge/commands/res/software/update</code>.</li>
+<li>Mapper translates the response to the cloud format and sends it to the cloud.</li>
+</ol>
+<h2 id="example-4"><a class="header" href="#example-4">Example 4</a></h2>
+<p>Given multiple operation files in operations directory and disregarding additional configuration following operations have been registered: <code>c8y_LogfileRequest</code>, <code>c8y_SoftwareUpdate</code>, <code>c8y_Restart</code>.
+Directory content:</p>
+<pre><code class="language-shell">$ ls -l /etc/tegde/operations/c8y
+-rw-rw-r-- 1 user user    688 Jan 1 00:01 c8y_LogfileRequest
+-rw-rw-r-- 1 user user    331 Jan 1 00:01 c8y_SoftwareUpdate
+-rw-rw-r-- 1 user user     40 Jan 1 00:01 c8y_Restart
+</code></pre>
+<ol>
+<li>Mapper reads directory for the cloud which it supports i.e. <code>/etc/tegde/operations/c8y</code>.</li>
+<li>Mapper finds the operation files in the directory <code>c8y</code>.</li>
+<li>Mapper takes the filenames of all the files in this directory and reads the operation file.</li>
+<li>Mapper collates the list of supported operations and when it's ready sends supported operations message to c8y which contains the list of supported operations i.e. <code>c8y_LogfileRequest</code>, <code>c8y_SoftwareUpdate</code>, <code>c8y_Restart</code>. E.g. <code>114,c8y_LogfileRequest,c8y_SoftwareUpdate,c8y_Restart</code></li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="thin-edgeio-tooling-for-operations-management"><a class="header" href="#thin-edgeio-tooling-for-operations-management"><code>thin-edge.io</code> tooling for operations management</a></h1>
+<p><code>thin-edge.io</code> provides cli tool for operations management.</p>
+<ul>
+<li>use <code>tedge cli</code> command to add or remove operations one by one, list all operations, list all operations per cloud
+<ul>
+<li>use new tedge subcommand <code>tedge operations</code></li>
+<li><code>tedge operations</code> supports following operations:
+<ul>
+<li><code>add cloud_name operation_name [--config configuration_filepath]</code> - adds single operation to the list if doesn't exist</li>
+<li><code>remove cloud_name operation_name</code> - removes single operation from the list if exists</li>
+<li><code>list [cloud_name]</code> - lists all operations, unless specific cloud table name provided, then lists only operations for the cloud if exists</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>e.g.:</p>
+<ul>
+<li>
+<p><code>tedge operations add c8y c8y_Restart</code></p>
+</li>
+<li>
+<p><code>tedge operations add c8y c8y_LogfileRequest --config ./logfile_config</code></p>
+</li>
+<li>
+<p>Future extension should provide a tool to create operations files - OUT OF SCOPE.</p>
+</li>
+<li>
+<p>Some configuration templates are going to be provided in the <code>thin-edge.io</code> repository.</p>
+</li>
+</ul>
+<p>Naming and details subject to change and comments.</p>
+<h2 id="use-in-tedge-components"><a class="header" href="#use-in-tedge-components">Use in tedge components</a></h2>
+<p><code>thin-edge.io</code> mappers should pickup operations per cloud from operations repository (filesystem),
+but an executor like agent to should be provided to execute them (e.g. permissions or state control).
+This way the executor can be configured to use different operations for different components.</p>
+<h2 id="adding-supported-operations"><a class="header" href="#adding-supported-operations">Adding supported operations</a></h2>
+<h3 id="adding-supported-operations-remotely"><a class="header" href="#adding-supported-operations-remotely">Adding supported operations remotely</a></h3>
+<p>Using <code>tedge cli</code> to add supported operations allows any tedge components (or even any device system component) to extend the list of supported operations on demand.</p>
+<p><code>tedge cli</code> tool can be scripted and therefore when installing new components using thin-edge.io software management supported operations can be added as a part of installation script (e.g. for apt/deb <code>postinst</code> script may execute necessary steps), or if it is a custom plugin supporting other package the finalize phase could invoke some metadata/postinstall script in the <code>finalize</code> phase.</p>
+<pre><code class="language-shell">#!/bin/sh
+
+set -e
+
+tedge operations add c8y c8y_Apama
+tedge operations add c8y c8y_BatchAnalytics --config ./batch_analytics_config
+</code></pre>
+<blockquote>
+<p>Note: In cases when tedge cli is not installed (currently not an option) one can use direct file modification to add or remove supported operations.</p>
+</blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
 <p>That document specifies the feature &quot;Software Management&quot; in scope of thin-edge.</p>
 <p>In thin-edge &quot;Software Management&quot; functionality basically results from given Cumulocity's &quot;Software Management&quot; feature. Anyway thin-edge's &quot;Software Management&quot; concept shall be flexible and open for potential other upcoming Clouds (e.g. Azure).</p>
@@ -313,7 +630,7 @@ Refer to <a href="telemetry-data/./mapper.html">Cloud Message Mapper Architectur
 <p>At right side actor <strong>Cloud</strong> represents Cumulocity or another potential cloud.</p>
 <p>At left side multiple <strong>Package-Manager</strong> actors are placed. A Package-Manager is a SW component that supportes to install or remove SW packages on the Device (e.g. Debian's &quot;APT&quot;, Canonical's &quot;Snap&quot; or Red Hat’s “RPM”). Thin-edge &quot;SW Management&quot; concept requires that one or more Package-Managers are provided by the Device's SW system.</p>
 <p>Finally on left side actors <strong>FW (Firmware)-Manager</strong> and <strong>Config-Manager</strong> are denoted. Both are shown here to point out that for now Firmware and Configuration are out of scope of that specification. Note that in the diagram both have no connection to any relevant use-case. </p>
-<h1 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h1>
+<h1 id="use-cases-1"><a class="header" href="#use-cases-1">Use Cases</a></h1>
 <p>All use-case above are prefixed with a unique identified (as UC&lt;i&gt;), just for easier referencing.</p>
 <table><thead><tr><th>UC1:</th><th>&quot;Report SW List&quot;</th></tr></thead><tbody>
 <tr><td><strong>Purpose</strong></td><td>The device reports a list of current installed SW packages to the cloud. Therefore all Package-Managers are involved.</td></tr>
