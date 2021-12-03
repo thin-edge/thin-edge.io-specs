@@ -11,8 +11,6 @@ A lost alam-raise could be even more problematic if the raised alarm requires so
 All alarm state-changes need to be transfered reliable from **Application to thin-edge**, and from **thin-edge to cloud**.
 I.E. alarm state-changes must not got lost, or device software must be able to detect loss and react accordingly (e.g. retry to transfer).
 
-More details about loss off data-transfer and proper reaction see...  TODO: add data-flow-image here!
-
 # Information Set per Alarm
 The specified alarm attributes below are inspired by cumulocity data model for alarms, but shall be re-usable for other clouds where possible.
 
@@ -30,9 +28,16 @@ Figure below illustrates the data flow from Customer Application broker/thin-edg
 
 ![Sequence Diagram Update SW-list](images/alarm_dataflow.svg)
 
-**TODO:** Interface from Mapper to Cloud to be defined. Two options are possible:
+**To be decided:** Interface from Mapper to Cloud to be defined. Two options are possible:
 1) **JSONviaMQTT:** To have reliability use QOS=1. Open issue: Not yet completely confirmed that C8Y sends PUBACK when msg was processed, instead just on arrival.
 2) **HTTP REST:** HTTP response indicates if message was processed sucessfully. Anyway HTTP REST would increase complexity of implementation and increase data traffic.
+
+## Requirements
+|   |
+|---------------|
+| Thin-edge shall transfer most recent state of an alarm to the cloud. |
+| Other local components (as local processes or connected clients) can consume alarm-states from thin-edge by subscribing local broker topics. The local consumer can be made to process full alarm-state history by using "QOS>0" in addition to "Retain". |
+| The same alarm-state message shall be transfered just once to the cloud.<br/>An alarm-state message is treated as different when at least one field (see section 'Information Set per Alarm' above) in the message differs to the message before.<br/>Hint: Some mapper-specifics topic can be used (retained and persisted) to store messages that were already transfered to cloud (e.g. `mapper/c8y/ack/alarms/<alarm>`). |
 
 
 # Public MQTT-based alarm interface
