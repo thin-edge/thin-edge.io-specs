@@ -5,6 +5,9 @@
     - [Thin Edge Json](telemetry-data/thin-edge-json.md)
     - [MQTT Bus](telemetry-data/mqtt-bus.md)
 
+## Alarms
+- [Alarm Handling](alarms/alarm-handling.md)
+
 ## Operations
 - [Operations](supported-operations/README.md)
     - [Requirements](supported-operations/requirements.md)
