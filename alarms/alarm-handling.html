@@ -1,0 +1,276 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Alarm Handling - Thin Edge Specifications</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../favicon.svg">
+                        <link rel="shortcut icon" href="../favicon.png">
+                <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+                <link rel="stylesheet" href="../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../telemetry-data/index.html"><strong aria-hidden="true">1.</strong> Telemetry Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../telemetry-data/thin-edge-json.html"><strong aria-hidden="true">1.1.</strong> Thin Edge Json</a></li><li class="chapter-item expanded "><a href="../telemetry-data/mqtt-bus.html"><strong aria-hidden="true">1.2.</strong> MQTT Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../alarms/alarm-handling.html" class="active"><strong aria-hidden="true">2.</strong> Alarm Handling</a></li><li class="chapter-item expanded "><a href="../supported-operations/index.html"><strong aria-hidden="true">3.</strong> Operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../supported-operations/requirements.html"><strong aria-hidden="true">3.1.</strong> Requirements</a></li><li class="chapter-item expanded "><a href="../supported-operations/principles.html"><strong aria-hidden="true">3.2.</strong> Principles</a></li><li class="chapter-item expanded "><a href="../supported-operations/thin-edge-supported-operations.html"><strong aria-hidden="true">3.3.</strong> Examples</a></li><li class="chapter-item expanded "><a href="../supported-operations/command-line-support.html"><strong aria-hidden="true">3.4.</strong> Command line support</a></li></ol></li><li class="chapter-item expanded "><a href="../software-management/index.html"><strong aria-hidden="true">4.</strong> Software management</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../software-management/usecase-update-swlist.html"><strong aria-hidden="true">4.1.</strong> Use-Case Update Software-List</a></li><li class="chapter-item expanded "><a href="../software-management/plugin-api.html"><strong aria-hidden="true">4.2.</strong> Package Manager Plugin API</a></li><li class="chapter-item expanded "><a href="../software-management/sm-agent.html"><strong aria-hidden="true">4.3.</strong> Software Management Agent</a></li><li class="chapter-item expanded "><a href="../software-management/c8y-mapper-operation-handling.html"><strong aria-hidden="true">4.4.</strong> C8Y Mapper Operation Handling</a></li><li class="chapter-item expanded "><a href="../software-management/thin-edge-json-mapping-to-from-c8y.html"><strong aria-hidden="true">4.5.</strong> Thin Edge JSON Mapping to/from C8Y</a></li></ol></li><li class="chapter-item expanded "><a href="../decisions/open-decisions.html"><strong aria-hidden="true">5.</strong> Open Decisions</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Thin Edge Specifications</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>That document specifies alarm handling for thin-edge.</p>
+<h1 id="data-semantic-of-alarms"><a class="header" href="#data-semantic-of-alarms">Data Semantic of Alarms</a></h1>
+<p>Thin-edge treats alarms as <strong>stateful signals</strong>. Instead to usual <strong>cyclic measured values</strong> (as e.g. measurements of physical units like temperature, humidity, pressure, ...) a <strong>stateful signal</strong> is transferred only on state-change. If such a transferred state-change got lost, the cloud assumes the wrong state until a next state-change occurs. Especially in case of alarms that means a once raised alarm would completely be unknown to the cloud.</p>
+<p>A lost alarm-raise could be even more problematic if the raised alarm requires some cloud-site interaction (or manual interaction). Since the lost alarm is not visible on cloud no interaction will be started. And since no state-change happens again, the alarm will never appear at cloud.</p>
+<p><strong>Consequence:</strong><br/></p>
+<p>All alarm state-changes need to be transferred reliable from <strong>Application to thin-edge</strong>, and from <strong>thin-edge to cloud</strong>.
+I.E., alarm state-changes must not got lost, or device software must be able to detect loss and react accordingly (e.g. retry to transfer).</p>
+<h1 id="information-set-per-alarm"><a class="header" href="#information-set-per-alarm">Information Set per Alarm</a></h1>
+<p>The specified alarm attributes below are inspired by cumulocity data model for alarms, but shall be re-usable for other clouds where possible.</p>
+<table><thead><tr><th>Name</th><th>Description</th></tr></thead><tbody>
+<tr><td>type-string</td><td>Device-unique type string (kind of alarm ID or alarm name), used to reference the once occurred alarm again, e.g. in case of updates (e.g. &quot;temperature_sensor_loss&quot;)</td></tr>
+<tr><td>message-string</td><td>Human readable short information about alarm reason (e.g. &quot;Temperature sensor does not respond&quot;)</td></tr>
+<tr><td>severity-string</td><td>Could be &quot;CRITICAL&quot;, &quot;MAJOR&quot;, &quot;MINOR&quot; or &quot;WARNING&quot;</td></tr>
+<tr><td>status-string</td><td>Could be &quot;ACTIVE&quot; or &quot;CLEARED&quot;<br/></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td>time-string</td><td>Timestamp indicating when the alarm (or the alarm-update) had occurred (in <a href="http://www.w3.org/TR/NOTE-datetime#">ISO 8601 format</a>)</td></tr>
+</tbody></table>
+<h1 id="data-flow"><a class="header" href="#data-flow">Data flow</a></h1>
+<p>Figure below illustrates the data flow from Customer Application broker/thin-edge up to cloud. It shows especially the use of MQTT QOS=1, MQTT Retain and Mosquitto Persistence to achieve reliability alarm state-change transfer.</p>
+<p><img src="images/alarm_dataflow.svg" alt="Sequence Diagram Update SW-list" /></p>
+<p><strong>To be decided:</strong> Interface from Mapper to Cloud to be defined. Two options are possible:</p>
+<ol>
+<li><strong>JSONviaMQTT:</strong> To have reliability use QOS=1. Open issue: Not yet completely confirmed that C8Y sends PUBACK when msg was processed, instead just on arrival.</li>
+<li><strong>HTTP REST:</strong> HTTP response indicates if message was processed successfully. Anyway HTTP REST would increase complexity of implementation and increase data traffic.</li>
+</ol>
+<h2 id="requirements"><a class="header" href="#requirements">Requirements</a></h2>
+<table><thead><tr><th></th></tr></thead><tbody>
+<tr><td>Thin-edge shall transfer most recent state of an alarm to the cloud.</td></tr>
+<tr><td>Other local components (as local processes or connected clients) can consume alarm-states from thin-edge by subscribing local broker topics. A local consumer can be made to process full alarm-state history by using &quot;Clean Start Flag=0&quot;, a constant &quot;client Id&quot; and &quot;QOS&gt;0&quot;.</td></tr>
+<tr><td>The same alarm-state message shall be transferred just once to the cloud.<br/>An alarm-state message is treated as different when at least one field (see section 'Information Set per Alarm' above) in the message differs to the message before.<br/>To avoid duplicates some mapper-specific topic shall be used (retained) to store and identify messages that were already transferred to the cloud (e.g. <code>mapper/c8y/ack/alarms/&lt;alarm&gt;</code>).</td></tr>
+</tbody></table>
+<h1 id="public-mqtt-based-alarm-interface"><a class="header" href="#public-mqtt-based-alarm-interface">Public MQTT-based alarm interface</a></h1>
+<p>Similar to thin-edge's measurement interface, alarm interface is based on MQTT topics.</p>
+<h2 id="topic-structure-and-payload"><a class="header" href="#topic-structure-and-payload">Topic structure and payload</a></h2>
+<p>Proposal to have &quot;severity&quot; and &quot;type-string&quot; as topics:</p>
+<p><strong>thin-edge JSON (alarm) format:</strong></p>
+<pre><code>Topic:   tedge/alarms/&lt;severity-string&gt;/&lt;type-string&gt;
+Payload: {
+  &quot;message&quot;:  &lt;message-string&gt;,
+  &quot;status&quot;:   &lt;status-string&gt;,  
+  &quot;time&quot;:     &lt;time-string&gt;
+}
+</code></pre>
+<p><strong>Addressing Child-Devices:</strong>
+To address an alarm to a child-device the sub-topic <code>childs</code> followed by the child's &quot;device id&quot; has to be used as below:</p>
+<pre><code>Child-Device Topics:   tedge/alarms/childs/&lt;child-device id&gt;/&lt;severity-string&gt;/&lt;type-string&gt;
+</code></pre>
+<p>Benefit to have &quot;severity&quot; and &quot;type-string&quot; as topics:
+Device-Site reactions to alarm could be easier realized.<br/></p>
+<p>Examples:</p>
+<pre><code># Listen to all major alarms on all devices
+tedge mqtt sub &quot;tedge/alarms/+/major/+&quot;
+
+# Listen to specific alarm on all devices
+# (e.g. a bunch of temperature sensors that have each an upper limit setpoint with alarm)
+tedge mqtt sub &quot;tedge/alarms/+/+/upper-limit-exceeded&quot;
+
+# And for sure all combinations.
+</code></pre>
+<p>Additionally an also supported &quot;raw&quot;-payload format will allow easy adoption for existing &quot;MQTT publishers&quot;:</p>
+<p><strong>Raw payload format:</strong></p>
+<pre><code>Topic:   tedge/alarms/&lt;severity-string&gt;/&lt;type-string&gt;
+Payload: &lt;message-string&gt;
+</code></pre>
+<p>NOTE: Child-device addressing works in the same way as for the JSON payload format above.</p>
+<p>In raw format for missing fields default values are used as below: </p>
+<ul>
+<li>
+<p>&quot;status&quot; := &quot;ACTIVE&quot;, if payload is not empty; &quot;CLEARED&quot;, if payload empty<br/></p>
+<p>NOTE: By nature of MQTT a message with empty payload will not be retained by the broker. However the mapper will store already transferred messages for de-duplication purpose anyway (see requirements above). Using that information mapper is in case of restart able to detect any not yet sent empty message.</p>
+</li>
+<li>
+<p>&quot;time&quot; := set to current system-time when picked-up by mapper</p>
+</li>
+</ul>
+<p>Benefit to support &quot;raw payload format&quot;:
+In industrial area (e.g. PLCs) there exist configurable MQTT publishers. These pick-up some data-item (e.g. some process-datapoint, alarm, ...) and publish it's raw value to some configured MQTT topic. With &quot;raw payload format&quot; above, such MQTT publishers can use thin-edge alarm interface without coding/developing some component in between.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../telemetry-data/mqtt-bus.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../supported-operations/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../telemetry-data/mqtt-bus.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../supported-operations/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+                <script type="text/javascript" src="../mermaid.min.js"></script>
+                <script type="text/javascript" src="../mermaid-init.js"></script>
+        
+        
+    </body>
+</html>
