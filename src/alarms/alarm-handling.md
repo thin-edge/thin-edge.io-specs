@@ -92,7 +92,7 @@ NOTE: Child-device addressing works in the same way as for the JSON payload form
 In raw format for missing fields default values are used as below: 
    - "status" := "ACTIVE", if payload is not empty; "CLEARED", if payload empty<br/>
      NOTE: By nature of MQTT a message with empty payload will not be retained by the broker. However the mapper will store already transferred messages for de-duplication purpose anyway (see requirements above). Using that information mapper is in case of restart able to detect any not yet sent empty message.
-   - "time" := set to current local time when picked-up by mapper
+   - "time" := set to current system-time when picked-up by mapper
 
 Benefit to support "raw payload format":
 In industrial area (e.g. PLCs) there exist configurable MQTT publishers. These pick-up some data-item (e.g. some process-datapoint, alarm, ...) and publish it's raw value to some configured MQTT topic. With "raw payload format" above, such MQTT publishers can use thin-edge alarm interface without coding/developing some component in between.
