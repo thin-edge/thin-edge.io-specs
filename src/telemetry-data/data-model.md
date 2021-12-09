@@ -42,7 +42,7 @@ Limitations:
 * There is no way to attach metadata to a data source (e.g the unit).
 * There is no way to attach metadata to a data point (e.g the quality of the measurement).
 
-## Requirements for thin-edge JSON version 1.0
+## Requirements for thin-edge data model version 1.0
 
 * Provide a clear semantics of the data that can be moved around thin-edge components.
   * Given two sets of messages, are they equivalent or not?
@@ -64,7 +64,7 @@ Limitations:
 * Let the data sources add any meta-data even if not processed by thin-edge.
   * It must be okay for a sensor to provide a serial number along its measurements.
   * It must be okay for an OPCUA data source to tag the measurements with a quality code. 
-
+Provide possibility to subscribe to specific measurements/alarms/events
 __Non goals__:
 * No complex message processing done by the reference mapper.
   * The reference mapper only decomposes the input messages into measurement constituents
