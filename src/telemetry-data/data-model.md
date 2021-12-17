@@ -64,7 +64,10 @@ Limitations:
 * Let the data sources add any meta-data even if not processed by thin-edge.
   * It must be okay for a sensor to provide a serial number along its measurements.
   * It must be okay for an OPCUA data source to tag the measurements with a quality code. 
-Provide possibility to subscribe to specific measurements/alarms/events
+* Provide possibility to subscribe to specific measurements/alarms/events.
+* Improve the mapping to Cumulocity with ability to assign a Cumulocity type to a measurement group.
+  * See [Add measurement type to thinedge JSON](https://github.com/thin-edge/thin-edge.io/issues/648)
+
 __Non goals__:
 * No complex message processing done by the reference mapper.
   * The reference mapper only decomposes the input messages into measurement constituents
