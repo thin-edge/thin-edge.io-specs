@@ -12,6 +12,7 @@
 - [Operations](supported-operations/README.md)
     - [Requirements](supported-operations/requirements.md)
     - [Principles](supported-operations/principles.md)
+    - [Running and monitoring operations](supported-operations/running-monitoring-operations.md)
     - [Examples](supported-operations/thin-edge-supported-operations.md)
     - [Command line support](supported-operations/command-line-support.md)
 

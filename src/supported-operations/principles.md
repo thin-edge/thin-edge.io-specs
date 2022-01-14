@@ -1,4 +1,4 @@
-## Proposal 
+## Adding operation support 
 
 * An operation is implemented by an executable that is responsible for:
   * the interactions with the cloud (using the locally bridged MQTT topics),
