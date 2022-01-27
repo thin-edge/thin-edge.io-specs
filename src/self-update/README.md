@@ -61,7 +61,7 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
 ### Details about the SM Agent
 
-* The SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/<plugin name>`, and send according update result message to the mapper.
+* The SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/<plugin name>`, send according update result message to the mapper, and clear the retain message on the topic afterwards.
 
 * For module type "tedge" the SM Agent must consider that a restart of the agent is valid.
   * When the SM Agent flags an upcoming update request in the `persistance_store` before the request starts, it must store also the module type.
