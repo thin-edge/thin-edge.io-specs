@@ -31,22 +31,45 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
 # Design Principles
 
-### Run-Time Behaviour
-* Self-Update is provided based on usual thin-egde's Software Management.
-  * A plugin for module type "tedge-update" specifically handles thin-edge self-update.
-* The plugin uses Debian Package Manager APT to upgrade requested thin-edge packages.
-* When executing APT the plugin will disable auto dependency solving.
-  * This is to avoid installing more than the requested packages to reduce risc for potential failures.
-* The plugin shall take all requested packages at once from SM Agent (i.E. Plugin API command "update-list" shall be used).
-* The plugin follows the contract of the Software Management Plugin API, with the exception of the way to report final result to the SM Agent:
-  * As the new started SM Agent will be disconnected from tedge-update plugin's child-process, the plugin will store potential `stdout` and the final exit status to some persistent file.
-  * The SM Agent will pickup that file and generates according update response for the mapper.
-* Potentially the spawned plugin-process need to detouched it-self from parent process SM Agent to avoid any impact when SM Agent process is stopped by APT upgrade procedure.
+### Details about the SM Plugin
 
-### Deployment
-* The "tedge-update" plugin must not be contained in any thin-edge package that is updated by that plugin (it cannot overwrite it-self while running).
-  * The "tedge-update" plugin shall be delivered as individual thin-edge package.
-  * That "tedge-update" plugin package can be updated using Software Management as any other Software Module (e.g. with normal "APT" module type).
+* A designated Software Management module type - namely "tedge" - will be used manage the self-update.
+
+* The existing SM plugin "apt" will be used and extended to manage that module type "tedge". 
+  * A device owner can implement an own plugin for module type "tedge", e.g. to use any other package manager than APT for self-update. 
+
+* A softlink to be created in `/etc/tedge/sm-plugins/` named `tedge` that points to `apt` plugin, will make the SM agent aware.
+
+* The plugin managing module type "tedge" must take all packages of an update request at once from SM Agent (i.E. Plugin API command "update-list" must be used). That is to get the plugin independent from potential restarts of the SM agent (those restarts are part of updating the SM agent).
+
+* Before any package update for module type "tedge" starts, all needed installation resources for the entire update request must be downloaded (i.E. all \*.deb packages for APT). That is to get the plugin uncoupled from any potential network issue during update procedure.
+  * For all packages with some URL given in the update request the SM Agent manages download before plugin start, and provides local file paths to the plugin.<br/>
+    TODO: What happens if one package download fails in SM agent? Does plugin maybe need to check if all files are locally available?
+  * For all packages without any URL given in the update request the Package Manager (i.E. APT) will manage the download as part of the update. Therefor the plugin must instruct the package manager to first download **all** packages. 
+    * If all packages were successfully downloaded, the package manager can start updating packages.<br/>
+    * Instead, if one or more download fails the plugin must stop before any installed package was touched by update, and report the entire update process as failed to the SM agent<br/>
+
+* After processing the complete update request the plugin will publish the overall exit code as MQTT retain message to topic `tedge/plugins/software/<plugin name>`, and exits.
+
+* As both module types "tedge" and "apt" use same package manager APT, the plugin manages a blacklist to allow later to distinguish packages reported by Package Managers `apt list` command.
+  * The blacklist is a TOML file that stores package names of all packages that were installed/updated with module type "tedge".
+  * When the plugin manages an update request for a package with module type "tedge" it adds the package to the blacklist.
+  * When the plugin manages an update request for a package with module type "apt" it removes the package from the blacklist.
+  * When the plugin is called with LIST command for module type "apt", all non tedge packages (all installed but not blacklisted ones) will be reported.
+  * When the plugin is called with LIST command for module type "tedge", all tedge packages (all installed and blacklisted ones) will be reported.
+
+
+### Details about the SM Agent
+
+* The SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/<plugin name>`, and send according update result message to the mapper.
+
+* For module type "tedge" the SM Agent must consider that a restart of the agent is valid.
+  * When the SM Agent flags an upcoming update request in the `persistance_store` before the request starts, it must store also the module type.
+  * When the SM Agent starts and finds a flagged update request in the `persistance_store` that is just for module type "tedge", no failure must be reported to the cloud.<br/>
+    TODO: An update request that contains module type "tedge" and others shall be rejected by the SM Agent with an error message. See Options below.
+
+# Options for more Robustness
+NOTE: Options below to be decided and addressed in a 2nd drop.
 
 ### Robustness in Packages' installation logic
 * Use of external tools (e.g. grep, sed, ...) shall be avoided in package's installation logic. Instead Rust code/libraries shall be used.
@@ -55,12 +78,12 @@ The device and it's thereon installed thin-edge has to follow precondition below
 * If one external ressource is not available installation/removal procedure shall fail before any action was performed.
 
 ### Robustness in Self-Update processing
-* When "tedge-update" plugin was started, no other update request for any other plugin must be in progress or started by the SM Agent.
+* When "tedge" plugin was started, no other update request for any other plugin must be in progress or started by the SM Agent.
   * Reason: APT will restart the SM Agent during upgrade, what would result into half-executed update procedures of other parallel running plugins and could lead to corrupted system behaviour.
-  * It would be valid to execute any update requests for other plugins when tedge-update has completely finished. 
-    It would be also valid to reject any other update request and report an error to Cloud while tedge upgrade is running. 
-* The plugin shall download all requested packages before any upgrade starts.
-  * This is to avoid any communication breakdown during upgrade processing.
-  * If one download fails, no package at all shall be upgrade and error shall reported.
-
-
+  * It would be valid to execute any update requests for other plugins when tedge has completely finished. 
+    It would be also valid to reject any other update request and report an error to Cloud while tedge update is running. 
+* When executing APT the plugin will disable auto dependency solving.
+  * This is to avoid installing more than the requested packages to reduce risc for potential failures.
+* SM Agent shall fail when plugin for "tedge" does not support "update_list".
+  * This is since an update request will fail when there is more than one package and the agent is concerned
+* SM Agent shall fail when update request with packages for module type "tedge" contains also other module types.
