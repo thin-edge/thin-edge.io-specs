@@ -1,6 +1,8 @@
 # Introduction
 
+
 Thin-edge self-update allows a Cloud Operator to update one thin-edge version that is installed on a device to a newer version, via the Cloud connection. The feature is referred as self-update cause that update process is managed by thin-edge own's Software Management.
+
 
 # Requirements
 
@@ -24,6 +26,7 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
 
 # Execution Flow and involved Components
+
 ![Sequence Diagram Update SW-list](images/self-update.drawio.svg)
 
 
@@ -31,41 +34,49 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
 ### Details about the SM Plugin
 
-* A designated Software Management module type - namely "tedge" - will be used manage the self-update.
+* Thin-edge updates are managed by a specific software management module type named `tedge`.
 
 * The existing SM plugin "apt" will be used and extended to manage that module type "tedge". 
-  * A device owner can implement an own plugin for module type "tedge", e.g. to use any other package manager than APT for self-update. 
+  * Same executable will be used for both module types, so a softlink must be located in `/etc/tedge/sm-plugins/` named `tedge`, that points to the plugin’s executable „apt“.
 
-* A softlink to be created in `/etc/tedge/sm-plugins/` named `tedge` that points to `apt` plugin, will make the SM agent aware.
+* As the plugin serves both module types "tedge" and "apt", the SM Agent will execute the plugin twice with the LIST command; once for each mode type. To distinguish packages listed by APT package manager per module type all packages prefixed with "tedge_" are assumed as module type "tedge".
+  * When the plugin is called with LIST command for module type "tedge", packages prefixed with "tedge_" must be reported.
+  * When the plugin is called with LIST command for module type "apt", all packages withoutprefix "tedge_" must be reported.
 
 * The agent must request updates on the `tedge` plugin using the `update-list` API of this plugin. So the plugin can process the entire update request without any further SM Agent action. This is required because the agent will be restarted by the plugin.
 
 * Before any package update for module type "tedge" starts, all needed installation resources for the entire update request must be downloaded (i.E. all \*.deb packages for APT). That is to get the plugin uncoupled from any potential network issue during update procedure.
   * For all packages with some URL given in the update request the SM Agent manages download before plugin start, and provides local file paths to the plugin.<br/>
     TODO: What happens if one package download fails in SM agent? Does plugin maybe need to check if all files are locally available?
-  * For all packages without any URL given in the update request the Package Manager (i.E. APT) will manage the download as part of the update. Therefor the plugin must instruct the package manager to first download **all** packages. 
-    * If all packages were successfully downloaded, the package manager can start updating packages.<br/>
-    * Instead, if one or more download fails the plugin must stop before any installed package was touched by update, and report the entire update process as failed to the SM agent<br/>
+  * For all packages without any URL given in the update request the Package Manager (i.E. APT) will manage the download as part of the update. Therefore implementation of plugin command update-list calls APT separately for download and for installation.
+    * First all packages are downloaded by calling APT with command line option `--download-only`.
+    * When all packages were successfully downloaded packages are installed by calling APT again with option `--no-download`.
+    * If one or more downloads fail, the plugin will not install any package, but return with error.
 
-* After processing the complete update request the plugin will publish the overall exit code as MQTT retain message to topic `tedge/plugins/software/<plugin name>`, and exits.<br/>
+  * **Important:** For module type „apt“ behavior must be kept as it is currently implemented. That means packages must be downloaded by APT as needed as part of the installation. Otherwise disc space could explode in case of large update requests.
+
+* After processing the complete update request the plugin will publish the overall exit code as MQTT retain message to topic `tedge/plugins/software/tedge`, and exits.<br/>
   NOTE: That is, since during processing the update the SM Agent will restart, and the restarted SM Agent process will be disconnected from plugin process and it's exit code.
-
-* As both module types "tedge" and "apt" use same package manager APT, the plugin manages a blacklist to allow later to distinguish packages reported by Package Managers `apt list` command.
-  * The blacklist is a TOML file that stores package names of all packages that were installed/updated with module type "tedge".
-  * When the plugin manages an update request for a package with module type "tedge" it adds the package to the blacklist.
-  * When the plugin manages an update request for a package with module type "apt" it removes the package from the blacklist.
-  * When the plugin is called with LIST command for module type "apt", all non tedge packages (all installed but not blacklisted ones) will be reported.
-  * When the plugin is called with LIST command for module type "tedge", all tedge packages (all installed and blacklisted ones) will be reported.
 
 
 ### Details about the SM Agent
 
-* The SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/<plugin name>`, send according update result message to the mapper, and clear the retain message on the topic afterwards.
+* Module type „tedge“ must appear exclusively in update requests:
+  * The SM Agent must reject any update request that contains module type „tedge“ and other module types. 
+    If a request appears that contains "tedge" and any other module type the SM Agent must report error to Cloud and shall create the log message:
+    * „Update failed since request contains module type ‚tedge‘ and others &mdash; but module type ‚tedge‘ must be used exclusively.“
 
-* For module type "tedge" the SM Agent must consider that a restart of the agent is valid.
-  * When the SM Agent flags an upcoming update request in the `persistance_store` before the request starts, it must store also the module type.
-  * When the SM Agent starts and finds a flagged update request in the `persistance_store` that is just for module type "tedge", no failure must be reported to the cloud.<br/>
-    TODO: An update request that contains module type "tedge" and others shall be rejected by the SM Agent with an error message. See Options below.
+* Handling of SM Agent restart:<br/>
+  NOTE: Restart of SM Agent by module type tedge is valid, or even expected.
+
+  * At the place where the SM Agent stores an upcoming software update request in the `persistance_store`, the names of the contained module types must be stored.
+  * At the place where SM Agent (re)starts and checks the `persistance_store` for any update request, it must avoid to send an error to the Cloud when the update request contains module type „tedge“.<br/>
+
+* Transfer of plugins exit code to the SM Agent:<br/>
+  NOTE: During execution of plugin for module type „tedge“ it is valid (or even expected) that the SM Agent will restart. The restarted SM Agent process will be disconnected from still running plugin's process and it's exit code.
+
+  * For module type tedge the SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/tedge`, send according update result message to the mapper, and clear the retain message on the topic afterwards.
+  * It might happen that the SM Agent does not restart and keeps connected to the plugin for module type "tedge" (e.g. when agent is not part of the update request, or the update fails). Also then the exit code that is reported by the plugin via MQTT must be used, instead of the exit code reported from plugin's process exit.
 
 # Options for more Robustness
 NOTE: Options below to be decided and addressed in a 2nd drop.
