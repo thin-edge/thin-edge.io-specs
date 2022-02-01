@@ -47,7 +47,8 @@ The device and it's thereon installed thin-edge has to follow precondition below
     * If all packages were successfully downloaded, the package manager can start updating packages.<br/>
     * Instead, if one or more download fails the plugin must stop before any installed package was touched by update, and report the entire update process as failed to the SM agent<br/>
 
-* After processing the complete update request the plugin will publish the overall exit code as MQTT retain message to topic `tedge/plugins/software/<plugin name>`, and exits.
+* After processing the complete update request the plugin will publish the overall exit code as MQTT retain message to topic `tedge/plugins/software/<plugin name>`, and exits.<br/>
+  NOTE: That is, since during processing the update the SM Agent will restart, and the restarted SM Agent process will be disconnected from plugin process and it's exit code.
 
 * As both module types "tedge" and "apt" use same package manager APT, the plugin manages a blacklist to allow later to distinguish packages reported by Package Managers `apt list` command.
   * The blacklist is a TOML file that stores package names of all packages that were installed/updated with module type "tedge".
