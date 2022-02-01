@@ -38,7 +38,7 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
 * A softlink to be created in `/etc/tedge/sm-plugins/` named `tedge` that points to `apt` plugin, will make the SM agent aware.
 
-* The plugin managing module type "tedge" must take all packages of an update request at once from SM Agent (i.E. Plugin API command "update-list" must be used). That is to get the plugin independent from potential restarts of the SM agent (those restarts are part of updating the SM agent).
+* The agent must request updates on the `tedge` plugin using the `update-list` API of this plugin. So the plugin can process the entire update request without any further SM Agent action. This is required because the agent will be restarted by the plugin.
 
 * Before any package update for module type "tedge" starts, all needed installation resources for the entire update request must be downloaded (i.E. all \*.deb packages for APT). That is to get the plugin uncoupled from any potential network issue during update procedure.
   * For all packages with some URL given in the update request the SM Agent manages download before plugin start, and provides local file paths to the plugin.<br/>
