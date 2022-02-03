@@ -3,15 +3,32 @@
 
 Thin-edge self-update allows a Cloud Operator to update one thin-edge version that is installed on a device to a newer version, via the Cloud connection. The feature is referred as self-update cause that update process is managed by thin-edge own's Software Management.
 
-
-# Requirements
-
-* Be default self-update shall use Debian Package Manager APT.
-  * NOTE: APT Package Manager provides a very basic rollback mechanism that still can fail (e.g. due to some unexpected device state or power-loss).
-* Device Owner shall be able to use a power-fail safe filesystem and transaction-safe package manager (instead of APT) - if the device support any.
-  * Therefore an extensible plugin shall be provided.
-* In thin-edge package's installation logic no external tools (e.g. grep, sed, ...) shall be used. Instead Rust code/libraries shall be used.
-  * This is to reduce external dependencies and so reduce risc for failures due missing tools or wrong version of tools.
+# Scope
+  * The self-upfate makes use of package manager "APT", but "APT" is not completely fail-safe.<br/>
+    For really fail-safe self-update the device would need to provide some transaction-safe package manager and some powerfail-safe filesystem.
+     
+  * Consequences: 
+     * Self-update can fail and could left the system in an unstable state. The device might be disconnected from Cloud.
+     * Potential fail reasons (without claim of completeness):
+       * No rollback of already processes package of one self-update request, when some subsequent package of same request fails.
+         <br/>-> leads to partially executed update. 
+       * Power-fail during update.
+         <br/>-> leads to partially executed update
+         <br/>-> can corrupt the package currently about to be updated
+         <br/>-> can corrupt the filesystem
+       * Installation of incompatibel set of thin-edge package versions (e.g. SM Agent of one release, and Mapper of another release).
+         <br/>-> thin-edge function might not given, when signifcant change happend between both release
+       * Tool(s) required by thin-edge installation procedure missing on the device (e.g. 'grep').
+         <br/>-> according package installation will stop.
+         
+  * Measures for more robusness:
+    * There are plans for thin-edge packages to reduce risks for installation failures:
+      <br/>TODO: For both, add some reference (some ‚ticket, discussion, ...)
+      1. Providing one thin-edge core package that contains everything needed for self-update (assumedly "Mapper", "SM Agent" and "SM Plugin"). 
+          So self-update just needs that one-and-only package; all other thin-edge packages can be update via usual Software Management.
+      2. Avoiding use of external tools in package installation logic (move from Shell scripts to Rust binary).
+    * If the custom device provides some transaction-safe package manager and some powerfail-safe filesystem, the device owner can 
+      adapt the `tedge` plugin to make use of both. 
 
 # Expected Pre-Conditions 
 
@@ -77,23 +94,3 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
   * For module type tedge the SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/tedge`, send according update result message to the mapper, and clear the retain message on the topic afterwards.
   * It might happen that the SM Agent does not restart and keeps connected to the plugin for module type "tedge" (e.g. when agent is not part of the update request, or the update fails). Also then the exit code that is reported by the plugin via MQTT must be used, instead of the exit code reported from plugin's process exit.
-
-# Options for more Robustness
-NOTE: Options below to be decided and addressed in a 2nd drop.
-
-### Robustness in Packages' installation logic
-* Use of external tools (e.g. grep, sed, ...) shall be avoided in package's installation logic. Instead Rust code/libraries shall be used.
-  * That is to reduce external dependencies and so reduce risc for failures.
-* At very beginning of the installation/removal logic all required/touched external ressources (e.g. config files as "mosquitto.conf", external tools (if any left), ...) shall be checked for availibility/accessibility.
-* If one external ressource is not available installation/removal procedure shall fail before any action was performed.
-
-### Robustness in Self-Update processing
-* When "tedge" plugin was started, no other update request for any other plugin must be in progress or started by the SM Agent.
-  * Reason: APT will restart the SM Agent during upgrade, what would result into half-executed update procedures of other parallel running plugins and could lead to corrupted system behaviour.
-  * It would be valid to execute any update requests for other plugins when tedge has completely finished. 
-    It would be also valid to reject any other update request and report an error to Cloud while tedge update is running. 
-* When executing APT the plugin will disable auto dependency solving.
-  * This is to avoid installing more than the requested packages to reduce risc for potential failures.
-* SM Agent shall fail when plugin for "tedge" does not support "update_list".
-  * This is since an update request will fail when there is more than one package and the agent is concerned
-* SM Agent shall fail when update request with packages for module type "tedge" contains also other module types.
