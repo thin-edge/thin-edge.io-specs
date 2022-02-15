@@ -94,27 +94,20 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
 # Alternative Considerations
 
-That section evaluates alternative considerations.
+That section evaluates the alternative approach to implement a seperate plugin for module type "tedge", instead of extending existing APT plugin. A main motivation for a separate plugin would be to avoid overload of the existing APT plugin and keep it as simple as possible.
 
-### Implementing a seperate plugin for module type "tedge", instead of extending existing APT plugin
+Evaluation of both alternatives:
 
-For module type `tedge` a separate plugin could be implemented, instead of extending existing APT plugin. For that most motivation is to not overload the existing APT plugin and keep it as most as simple.
-
-* Technical summary of extension work for APT plugin
+* **Option 1 "Extending APT plugin":** Adds complexity to APT plugin, as below:
   * Adding another regular expression into LIST command to filter for package name with and without prefix "tedge".
-  * Adding use of MQTT client and publishing exit-code as MQTT messages.
-  * Adding another APT call to download all package before any installation happens.
+  * Adding use of MQTT client to publish exit-code as MQTT message.
+  * Adding another APT call to download all packages before any installation happens.
 
-* Reuse factor of APT plugin
-  * Almost everything of the existing APT plugin implementation will be also used to process module type "tedge". 
+* **Option 2 "Implementing a separate `tedge` plugin":** Leads to duplicated code:
+  * Almost everything of the existing APT plugin's code is needed also for the separate plugin that manages module type "tedge". 
 
-* Value of separating module type "tedge" into a separate plugin:
-  * **Pro:** Separated module type specifics into another plugin (simplification of APT plugin)  
-  * **Contra:** A lot of duplicated code. 
+Conclusion:
 
-Approach:
-Implementation of module type "tedge" to be started with extending the existing APT plugin. Before releasing self-update decision to be taken:
-   1. Go with extended APT plugin. Nothing to change.
-   2. Separate module type `tedge` into another plugin. Changes to do:
-      - Copy extended APT plugin and rename copy to `tedge`
-      - Revert extension in APT plugin and restore state from before.
+Changes in APT plugin required for option 1 are small in comparision to amount of duplicated code for option 2.
+
+Decision: Start with Option 1 (extending the existing APT plugin). If changes in APT plugin get more complex as expected, switch to option 2 can happen easy, but before self-update is released.
