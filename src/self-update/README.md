@@ -61,8 +61,7 @@ The device and it's thereon installed thin-edge has to follow precondition below
 * The agent must request updates on the `tedge` plugin using the `update-list` API of this plugin. So the plugin can process the entire update request without any further SM Agent action. This is required because the agent will be restarted by the plugin.
 
 * Before any package update for module type "tedge" starts, all needed installation resources for the entire update request must be downloaded (i.E. all \*.deb packages for APT). That is to get the plugin uncoupled from any potential network issue during update procedure.
-  * For all packages with some URL given in the update request the SM Agent manages download before plugin start, and provides local file paths to the plugin.<br/>
-    TODO: What happens if one package download fails in SM agent? Does plugin maybe need to check if all files are locally available?
+  * For all packages with some URL given in the update request the SM Agent manages download before plugin start, and provides local file paths to the plugin. If one or more package download fails, the SM Agent cancels the entire update request before starting the plugin.
   * For all packages without any URL given in the update request the Package Manager (i.E. APT) will manage the download as part of the update. Therefore implementation of plugin command update-list calls APT separately for download and for installation.
     * First all packages are downloaded by calling APT with command line option `--download-only`.
     * When all packages were successfully downloaded packages are installed by calling APT again with option `--no-download`.
