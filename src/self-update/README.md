@@ -34,10 +34,8 @@ Thin-edge self-update allows a Cloud Operator to update one thin-edge version th
 
 The device and it's thereon installed thin-edge has to follow precondition below to allow successful self-update:
 
-1) The current (old) thin-edge on the device must be installed with usual thin-edge installation, or at leat as usual thin-edge installation would do. That is to assure new thin-edge version that is about to be installed has all external and internal files, folders and resources (e.g. config files) available.
+1) The current (old) thin-edge on the device must be installed with usual thin-edge installation. That is to assure new thin-edge version that is about to be installed has all external and internal files, folders and resources (e.g. config files) available.
 2) Deployment of thin-edge and mosquitto must not be changed manually after initial installation (e.g. moving/renaming installed files, moving/renaming configuration files used by thin-edge, renaming users/groups created during installation, ...).
-
-3) Package Dependencies need to be solved using SW Management before self-update. This is since self-update will disable auto-dep solving to reduce additional risk during self-update.
 
 *Hint: Before executing self-update on devices in the field it shall be tested on a kind of golden device that equals the device(s) in the field in system-environment, configuration and thin-edge version.*
 
