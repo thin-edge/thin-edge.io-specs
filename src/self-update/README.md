@@ -91,3 +91,30 @@ The device and it's thereon installed thin-edge has to follow precondition below
 
   * For module type tedge the SM agent must accept the final exit code of a plugin execution via MQTT retain message on topic `tedge/plugins/software/tedge`, send according update result message to the mapper, and clear the retain message on the topic afterwards.
   * It might happen that the SM Agent does not restart and keeps connected to the plugin for module type "tedge" (e.g. when agent is not part of the update request, or the update fails). Also then the exit code that is reported by the plugin via MQTT must be used, instead of the exit code reported from plugin's process exit.
+
+# Alternative Considerations
+
+That section evaluates alternative considerations.
+
+### Implementing a seperate plugin for module type "tedge", instead of extending existing APT plugin
+
+For module type `tedge` a separate plugin could be implemented, instead of extending existing APT plugin. For that most motivation is to not overload the existing APT plugin and keep it as most as simple.
+
+* Technical summary of extension work for APT plugin
+  * Adding another regular expression into LIST command to filter for package name with and without prefix "tedge".
+  * Adding use of MQTT client and publishing exit-code as MQTT messages.
+  * Adding another APT call to download all package before any installation happens.
+
+* Reuse factor of APT plugin
+  * Almost everything of the existing APT plugin implementation will be also used to process module type "tedge". 
+
+* Value of separating module type "tedge" into a separate plugin:
+  * **Pro:** Separated module type specifics into another plugin (simplification of APT plugin)  
+  * **Contra:** A lot of duplicated code. 
+
+Approach:
+Implementation of module type "tedge" to be started with extending the existing APT plugin. Before releasing self-update decision to be taken:
+   1. Go with extended APT plugin. Nothing to change.
+   2. Separate module type `tedge` into another plugin. Changes to do:
+      - Copy extended APT plugin and rename copy to `tedge`
+      - Revert extension in APT plugin and restore state from before.
