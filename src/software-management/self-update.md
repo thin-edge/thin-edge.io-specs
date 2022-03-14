@@ -39,8 +39,6 @@ Thin-edge self-update allows a Cloud Operator to update one thin-edge version th
 
 # Execution Flow and involved Components
 
-TODO: adapt figure below according to individual self-updater component.
-
 ![Sequence Diagram Update SW-list](images/self-update.drawio.svg)
 
 
