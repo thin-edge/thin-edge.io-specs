@@ -5,9 +5,8 @@
 Thin-edge self-update allows a Cloud Operator to update one thin-edge version that is installed on a device to a newer version, via the Cloud connection. The feature is referred as self-update cause that update process is managed by thin-edge own's Software Management.
 
 # Scope
-  * The self-update makes use of usual thin-edge Software Management plugins (e.g. "APT"). So is not completely fail-safe, but is foundation.<br/>
-    For completely fail-safe self-update the device would need to provide and use some transaction-safe package manager and some powerfail-safe filesystem.
-    TODO: Examples for both?
+  * The self-update makes use of usual thin-edge Software Management plugins (e.g. "APT"). So is not absolutely fail-safe, instead of that it is the foundation for it.<br/>
+    For absolutely fail-safe self-update the device would need to provide and use some transaction-safe package manager and some powerfail-safe filesystem.
      
   * Consequences: 
      * Self-update can fail and could left the system in an unstable state. The device might be disconnected from Cloud.
