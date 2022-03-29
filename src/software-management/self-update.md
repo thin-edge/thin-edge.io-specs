@@ -5,36 +5,17 @@
 Thin-edge self-update allows a Cloud Operator to update one thin-edge version that is installed on a device to a newer version, via the Cloud connection. The feature is referred as self-update cause that update process is managed by thin-edge own's Software Management.
 
 # Scope
-  * The self-update makes use of usual thin-edge Software Management plugins (e.g. "APT"). So is not absolutely fail-safe, instead of that it is the foundation for it.<br/>
-    For absolutely fail-safe self-update the device would need to provide and use some transaction-safe package manager and some powerfail-safe filesystem.
-     
-  * Consequences: 
-     * Self-update can fail and could left the system in an unstable state. The device might be disconnected from Cloud.
-     * Potential fail reasons (without claim of completeness):
-       * No rollback of already processes package of one self-update request, when some subsequent package of same request fails.
-         <br/>-> leads to partially executed update. 
-       * Power-fail during update.
-         <br/>-> leads to partially executed update
-         <br/>-> can corrupt the package currently about to be updated
-         <br/>-> can corrupt the filesystem
-       * Installation of incompatibel set of thin-edge package versions (e.g. SM Agent of one release, and Mapper of another release).
-         <br/>-> thin-edge function might not given, when signifcant change happened between both release
-       * Tool(s) required by thin-edge installation procedure missing on the device (e.g. 'grep').
-         <br/>-> according package installation will stop.
-         
+  * The self-update makes use of usual thin-edge Software Management plugins (e.g. "APT"). It is as robust as the underlying package manager and filesystem (e.g. in case of power fail or installation failures).
+
   * Measures for more robusness:
+    * A customer should use a transaction-safe package manager and powerfail-safe filesystem, if the device provides any.
+
     * There are plans for thin-edge packages to reduce risks for installation failures:
-      <br/>TODO: For both, add some reference (some ‚ticket, discussion, ...)
-      1. Providing one thin-edge core package that contains everything needed for self-update (assumedly "Mapper", "SM Agent" and "SM Plugin"). 
-          So self-update just needs that one-and-only package; all other thin-edge packages can be update via usual Software Management.
-      2. Avoiding use of external tools in package installation logic (move from Shell scripts to Rust binary).
-    * If the custom device provides some transaction-safe package manager and some powerfail-safe filesystem, the device owner can 
-      provide an according Software Management plugin, and can make use of that by processing a self-update on the according module type. 
-
-*Hint: Before executing self-update on devices in the field it shall be tested on a kind of golden device that equals the device(s) in the field in system-environment, configuration and thin-edge version.*
-
-
-
+      1. Avoiding use of external tools in package installation logic (move from Shell scripts to Rust binary).
+         See issue [#761](https://github.com/thin-edge/thin-edge.io/issues/761)
+      2. Providing one thin-edge core package that contains everything needed for self-update (assumedly "Mapper", "SM Agent" and "SM Plugin"). 
+         So self-update just needs that one-and-only package; all other thin-edge packages can be update via usual Software Management.
+         See issue [TODO](TODO)
 
 # Execution Flow and involved Components
 
@@ -70,7 +51,6 @@ Thin-edge self-update allows a Cloud Operator to update one thin-edge version th
 
 
   Sketch of the self-updater flow:
-
 ```
 update_list() {
   for all clouds :
@@ -96,6 +76,6 @@ update_list() {
   * At the place (during startup) where SM Agent checks the `persistance_store` for any update request, it must avoid to send any error to the Cloud when the update request was processed by the self-updater.<br/>
   * The SM Agent shall check at startup for exitsence of the file "/var/run/tedge_update/selfupdate-result".
     * If that file exists it contains ASCII text that represents the final result code (referred as "exit status" in the plugin API spec) of the self-update.
-    * The SM Agent shall send and according result message to the Cloud, and delete that file.
+    * The SM Agent shall send an according result message to the Cloud, and delete that file.
 
   * It might happen that the SM Agent does not restart and keeps connected to the self-updater (e.g. when the update fails). In that case the exit code of the self-updater process shall be used, and the file "/var/run/tedge_update/selfupdate-result" shall be removed, if exists.
