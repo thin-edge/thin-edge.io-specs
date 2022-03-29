@@ -24,7 +24,7 @@ Thin-edge self-update allows a Cloud Operator to update one thin-edge version th
 
 # Design Principles
 
-* Thin-edge updates are managed by a specific software component named `self-updater`.
+* Thin-edge updates are managed by a specific software component named tedge-self-updater (in following sections referenced as `self-updater`).
 
 * The self-updater is an own executable that implements the plugin API's command `update-list` (nothing more from the plugin API).
 
