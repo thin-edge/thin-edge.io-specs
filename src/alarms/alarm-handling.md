@@ -17,7 +17,7 @@ The specified alarm attributes below are inspired by cumulocity data model for a
 | Name              | Description   |
 | ----------------- |---------------|
 | type-string       | Device-unique type string (kind of alarm ID or alarm name), used to reference the once occurred alarm again, e.g. in case of updates (e.g. "temperature_sensor_loss") |
-| message-string    | Human readable short information about alarm reason (e.g. "Temperature sensor does not respond") |
+| text-string    | Human readable short information about alarm reason (e.g. "Temperature sensor does not respond") |
 | severity-string   | Could be "CRITICAL", "MAJOR", "MINOR" or "WARNING" |
 | status-string     | Could be "ACTIVE" or "CLEARED"<br/>
 | time-string       | Timestamp indicating when the alarm (or the alarm-update) had occurred (in [ISO 8601 format](http://www.w3.org/TR/NOTE-datetime#)) |
@@ -52,7 +52,7 @@ Proposal to have "severity" and "type-string" as topics:
 ```
 Topic:   tedge/alarms/<severity-string>/<type-string>
 Payload: {
-  "message":  <message-string>,
+  "text":  <text-string>,
   "status":   <status-string>,  
   "time":     <time-string>
 }
@@ -84,7 +84,7 @@ Additionally an also supported "raw"-payload format will allow easy adoption for
 **Raw payload format:**
 ```
 Topic:   tedge/alarms/<severity-string>/<type-string>
-Payload: <message-string>
+Payload: <text-string>
 ```
 
 NOTE: Child-device addressing works in the same way as for the JSON payload format above.
