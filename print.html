@@ -307,17 +307,16 @@ Refer to <a href="telemetry-data/./mapper.html">Cloud Message Mapper Architectur
 <h1 id="data-semantic-of-alarms"><a class="header" href="#data-semantic-of-alarms">Data Semantic of Alarms</a></h1>
 <p>Thin-edge treats alarms as <strong>stateful signals</strong>. Instead to usual <strong>cyclic measured values</strong> (as e.g. measurements of physical units like temperature, humidity, pressure, ...) a <strong>stateful signal</strong> is transferred only on state-change. If such a transferred state-change got lost, the cloud assumes the wrong state until a next state-change occurs. Especially in case of alarms that means a once raised alarm would completely be unknown to the cloud.</p>
 <p>A lost alarm-raise could be even more problematic if the raised alarm requires some cloud-site interaction (or manual interaction). Since the lost alarm is not visible on cloud no interaction will be started. And since no state-change happens again, the alarm will never appear at cloud.</p>
-<p><strong>Consequence:</strong><br/></p>
-<p>All alarm state-changes need to be transferred reliable from <strong>Application to thin-edge</strong>, and from <strong>thin-edge to cloud</strong>.
+<p><strong>Consequence:</strong><br/>
+All alarm state-changes need to be transferred reliable from <strong>Application to thin-edge</strong>, and from <strong>thin-edge to cloud</strong>.
 I.E., alarm state-changes must not got lost, or device software must be able to detect loss and react accordingly (e.g. retry to transfer).</p>
 <h1 id="information-set-per-alarm"><a class="header" href="#information-set-per-alarm">Information Set per Alarm</a></h1>
 <p>The specified alarm attributes below are inspired by cumulocity data model for alarms, but shall be re-usable for other clouds where possible.</p>
 <table><thead><tr><th>Name</th><th>Description</th></tr></thead><tbody>
 <tr><td>type-string</td><td>Device-unique type string (kind of alarm ID or alarm name), used to reference the once occurred alarm again, e.g. in case of updates (e.g. &quot;temperature_sensor_loss&quot;)</td></tr>
-<tr><td>message-string</td><td>Human readable short information about alarm reason (e.g. &quot;Temperature sensor does not respond&quot;)</td></tr>
+<tr><td>text-string</td><td>Human readable short information about alarm reason (e.g. &quot;Temperature sensor does not respond&quot;)</td></tr>
 <tr><td>severity-string</td><td>Could be &quot;CRITICAL&quot;, &quot;MAJOR&quot;, &quot;MINOR&quot; or &quot;WARNING&quot;</td></tr>
 <tr><td>status-string</td><td>Could be &quot;ACTIVE&quot; or &quot;CLEARED&quot;<br/></td></tr>
-<tr><td></td><td></td></tr>
 <tr><td>time-string</td><td>Timestamp indicating when the alarm (or the alarm-update) had occurred (in <a href="http://www.w3.org/TR/NOTE-datetime#">ISO 8601 format</a>)</td></tr>
 </tbody></table>
 <h1 id="data-flow"><a class="header" href="#data-flow">Data flow</a></h1>
@@ -341,7 +340,7 @@ I.E., alarm state-changes must not got lost, or device software must be able to 
 <p><strong>thin-edge JSON (alarm) format:</strong></p>
 <pre><code>Topic:   tedge/alarms/&lt;severity-string&gt;/&lt;type-string&gt;
 Payload: {
-  &quot;message&quot;:  &lt;message-string&gt;,
+  &quot;text&quot;:  &lt;text-string&gt;,
   &quot;status&quot;:   &lt;status-string&gt;,  
   &quot;time&quot;:     &lt;time-string&gt;
 }
@@ -351,8 +350,8 @@ To address an alarm to a child-device the sub-topic <code>childs</code> followed
 <pre><code>Child-Device Topics:   tedge/alarms/childs/&lt;child-device id&gt;/&lt;severity-string&gt;/&lt;type-string&gt;
 </code></pre>
 <p>Benefit to have &quot;severity&quot; and &quot;type-string&quot; as topics:
-Device-Site reactions to alarm could be easier realized.<br/></p>
-<p>Examples:</p>
+Device-Site reactions to alarm could be easier realized.<br/>
+Examples:</p>
 <pre><code># Listen to all major alarms on all devices
 tedge mqtt sub &quot;tedge/alarms/+/major/+&quot;
 
@@ -362,24 +361,6 @@ tedge mqtt sub &quot;tedge/alarms/+/+/upper-limit-exceeded&quot;
 
 # And for sure all combinations.
 </code></pre>
-<p>Additionally an also supported &quot;raw&quot;-payload format will allow easy adoption for existing &quot;MQTT publishers&quot;:</p>
-<p><strong>Raw payload format:</strong></p>
-<pre><code>Topic:   tedge/alarms/&lt;severity-string&gt;/&lt;type-string&gt;
-Payload: &lt;message-string&gt;
-</code></pre>
-<p>NOTE: Child-device addressing works in the same way as for the JSON payload format above.</p>
-<p>In raw format for missing fields default values are used as below: </p>
-<ul>
-<li>
-<p>&quot;status&quot; := &quot;ACTIVE&quot;, if payload is not empty; &quot;CLEARED&quot;, if payload empty<br/></p>
-<p>NOTE: By nature of MQTT a message with empty payload will not be retained by the broker. However the mapper will store already transferred messages for de-duplication purpose anyway (see requirements above). Using that information mapper is in case of restart able to detect any not yet sent empty message.</p>
-</li>
-<li>
-<p>&quot;time&quot; := set to current system-time when picked-up by mapper</p>
-</li>
-</ul>
-<p>Benefit to support &quot;raw payload format&quot;:
-In industrial area (e.g. PLCs) there exist configurable MQTT publishers. These pick-up some data-item (e.g. some process-datapoint, alarm, ...) and publish it's raw value to some configured MQTT topic. With &quot;raw payload format&quot; above, such MQTT publishers can use thin-edge alarm interface without coding/developing some component in between.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="extensible-support-of-operations"><a class="header" href="#extensible-support-of-operations">Extensible support of operations</a></h1>
 <p>The main features of thin-edge can be extended with plugins that provide specific support for new operations,
 that can be then triggered from the cloud or from other components.</p>
@@ -808,7 +789,6 @@ sub-specifications.</p>
 <tr><td> </td><td>(4) If exec-list has return &lt;not-implemeneted&gt; agent iterates over &quot;sw-list_pktType1&quot;. For each particular package the command (&quot;install&quot; or &quot;remove&quot;) is send to responsible Package Manager Plugin. The according &quot;command&quot; is determined based on information that is part of the sw-list for each package.</td></tr>
 <tr><td> </td><td>Same steps (3 and 4 from above) will be executed for each splitted list &quot;sw-list_pktType&lt;i&gt;&quot; and according Package Manager Plugin.</td></tr>
 <tr><td> </td><td><strong>TO-BE-DECIDED-#1:</strong> Some delta comparision shall occur at some place, to avoid installing already installed packages and avoid removing not existing ones. To be decided whether delta-comparision shall occur in SM Agent or Package Manager Plugin. (?) <br/><br/></td></tr>
-<tr><td></td><td></td></tr>
 <tr><td> </td><td> </td></tr>
 <tr><td><strong>Further Spec</strong></td><td>Spec about details of SM Agent and it's interface to Cloud Mapper is under construction. See <a href="https://cumulocity.atlassian.net/browse/CIT-411">Ticket CIT-411</a> <br/>Spec about interface between SM agent and Package Manager Plugin see <a href="https://github.com/thin-edge/thin-edge.io-specs/blob/main/src/software-management/plugin-api.md">src/software-management/plugin-api.md</a></td></tr>
 </tbody></table>
@@ -1896,24 +1876,16 @@ In this case, the mapper should send only operation <code>FAILED</code> to C8Y c
 <p><strong>Reference:</strong> Use Case Diagram &quot;SW Management&quot; (see reference &quot;TO-BE-DECIDED-#1&quot;): https://github.com/thin-edge/thin-edge.io-specs/blob/0cc561632947220cbf5d8a204be8a4a9ad9abb5a/src/software-management/README.md</p>
 <p><strong>Option #1</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong>  Just on Device/Agent start<br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong>  TBD<br/></p>
-</li>
+<li><strong>Description:</strong>  Just on Device/Agent start<br/></li>
+<li><strong>Implications:</strong>  TBD<br/></li>
 </ul>
 <p><strong>Option #2</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong> Periodically? (Last might capture also manually installed packages).<br/></p>
-<p>See ref: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/></p>
-<p>-&gt; Section: &quot;Update Profile Operation&quot;<br/></p>
-<p>-&gt; Snippet: &quot;As part of the above use cases, this use cases extracts the current software list from the device. [...] Additionally, this use cases could be called periodically by e.g. a cron job.&quot;.<br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong> TBD <br/></p>
-</li>
+<li><strong>Description:</strong> Periodically? (Last might capture also manually installed packages).<br/>
+See ref: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>
+-&gt; Section: &quot;Update Profile Operation&quot;<br/>
+-&gt; Snippet: &quot;As part of the above use cases, this use cases extracts the current software list from the device. [...] Additionally, this use cases could be called periodically by e.g. a cron job.&quot;.<br/></li>
+<li><strong>Implications:</strong> TBD <br/></li>
 </ul>
 <p><strong>Comment:</strong> Due to agent's request-response-model periodically trigger can be realized outside of agent.</p>
 <p> 
@@ -1923,33 +1895,25 @@ In this case, the mapper should send only operation <code>FAILED</code> to C8Y c
  
  </p>
 <h2 id="decision-002"><a class="header" href="#decision-002"><strong>Decision-002</strong></a></h2>
-<p><strong>Problem Statement:</strong> Some delta comparision shall occur at some place, to avoid installing already installed packages and avoid removing not existing ones. <br/></p>
-<p>To be decided whether delta-comparision shall occur in SM Agent or Package Manager Plugin.</p>
+<p><strong>Problem Statement:</strong> Some delta comparision shall occur at some place, to avoid installing already installed packages and avoid removing not existing ones. <br/>
+To be decided whether delta-comparision shall occur in SM Agent or Package Manager Plugin.</p>
 <p><strong>Reference:</strong> Sequence Diagram &quot;Update SW-list&quot; (see reference &quot;TO-BE-DECIDED-#1&quot;): https://github.com/thin-edge/thin-edge.io-specs/blob/0cc561632947220cbf5d8a204be8a4a9ad9abb5a/src/software-management/usecase-update-swlist.md</p>
 <p><strong>Option #1</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong> Delta-comparision by SM Agent. <br/></p>
-<p>See ref: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/></p>
-<p>-&gt; Section: &quot;Update Software Operation&quot; <br/></p>
-<p>-&gt; Steps underneath &quot;The operation is executed as follows&quot; <br/></p>
-<p>and <br/></p>
-<p>-&gt; Section: &quot;Hiding Software Module&quot; <br/></p>
-<p>-&gt; Snippet: &quot;Certain packages should not be uninstallable. By not listed them, they are also not uninstalled based on delta algorithm described under &quot;update software&quot; above (only software modules that are part of the current software list can be uninstalled.)&quot;</p>
-</li>
-<li>
-<p><strong>Implications:</strong> TBD <br/></p>
-</li>
+<li><strong>Description:</strong> Delta-comparision by SM Agent. <br/>
+See ref: https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>
+-&gt; Section: &quot;Update Software Operation&quot; <br/>
+-&gt; Steps underneath &quot;The operation is executed as follows&quot; <br/>
+and <br/>
+-&gt; Section: &quot;Hiding Software Module&quot; <br/>
+-&gt; Snippet: &quot;Certain packages should not be uninstallable. By not listed them, they are also not uninstalled based on delta algorithm described under &quot;update software&quot; above (only software modules that are part of the current software list can be uninstalled.)&quot;</li>
+<li><strong>Implications:</strong> TBD <br/></li>
 </ul>
 <p><strong>Option #2</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong> Delta-comparision by Package Manager Plugins<br/></p>
-<p>TODO: more Details will be added here.<br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong> TBD <br/></p>
-</li>
+<li><strong>Description:</strong> Delta-comparision by Package Manager Plugins<br/>
+TODO: more Details will be added here.<br/></li>
+<li><strong>Implications:</strong> TBD <br/></li>
 </ul>
 <p><strong>Comment:</strong> -</p>
 <p> 
@@ -1963,41 +1927,27 @@ In this case, the mapper should send only operation <code>FAILED</code> to C8Y c
 <p><strong>Reference:</strong> Sequence Diagram &quot;Update SW-list&quot; (see reference &quot;TO-BE-DECIDED-#2&quot;): https://github.com/thin-edge/thin-edge.io-specs/blob/0cc561632947220cbf5d8a204be8a4a9ad9abb5a/src/software-management/usecase-update-swlist.md</p>
 <p><strong>Option #1</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong>  Keeping order inside sw-list from Cloud to enable Cloud operator to dictate the order of processing.<br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong>  Would allow the cloud operator:<br/></p>
-</li>
-<li>
-<p>to manage package dependencies<br/></p>
-<p>   a) within on package type (E.g.: 1st install debain package &quot;foo&quot;, 2nd install debian package &quot;bar&quot;)<br/></p>
-<p>   b) to manage package dependencies beyond package types (E.g.: 1st install debian package &quot;foo&quot;, 2nd install Docker package &quot;bar&quot;)<br/></p>
-<p>   c) to install package type per package type (E.g.: 1st install all Debain packages, 2nd install Docker packages)<br/></p>
-<p>NOTE: That or a similar solution would be required if Package Management auto-dependency solving is disabled or not available (see Decision 4). <br/></p>
-<p>Pro: Gives Freedom to the Cloud Operator<br/></p>
-<p>Con: Gives responsibility to the Cloud Operator <br/></p>
-<p>Disadvantage: a) Not a declarative semantics anymore b) Cloud must have detail knowledge about package types on different devices, impossible to scale?<br/></p>
-</li>
+<li><strong>Description:</strong>  Keeping order inside sw-list from Cloud to enable Cloud operator to dictate the order of processing.<br/></li>
+<li><strong>Implications:</strong>  Would allow the cloud operator:<br/></li>
+<li>to manage package dependencies<br/>
+   a) within on package type (E.g.: 1st install debain package &quot;foo&quot;, 2nd install debian package &quot;bar&quot;)<br/>
+   b) to manage package dependencies beyond package types (E.g.: 1st install debian package &quot;foo&quot;, 2nd install Docker package &quot;bar&quot;)<br/>
+   c) to install package type per package type (E.g.: 1st install all Debain packages, 2nd install Docker packages)<br/>
+NOTE: That or a similar solution would be required if Package Management auto-dependency solving is disabled or not available (see Decision 4). <br/>
+Pro: Gives Freedom to the Cloud Operator<br/>
+Con: Gives responsibility to the Cloud Operator <br/>
+Disadvantage: a) Not a declarative semantics anymore b) Cloud must have detail knowledge about package types on different devices, impossible to scale?<br/></li>
 </ul>
 <p><strong>Option #2</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong>  Hardcoding some as best expected order into the agent. <br/></p>
-<p>Example order:  - 1st process per package type (&quot;debian&quot;, ...) - then 2nd per operation (&quot;remove, install&quot;). <br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong> No chance to solve dependencies on Cloud-side. See also Decision 4. <br/></p>
-</li>
+<li><strong>Description:</strong>  Hardcoding some as best expected order into the agent. <br/>
+Example order:  - 1st process per package type (&quot;debian&quot;, ...) - then 2nd per operation (&quot;remove, install&quot;). <br/></li>
+<li><strong>Implications:</strong> No chance to solve dependencies on Cloud-side. See also Decision 4. <br/></li>
 </ul>
 <p><strong>Option #3</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong> Define plugin execution order inside agent, e.g. using numbers in the plugin filename? Example: <br/>- 01debain<br/>- 02docker<br/>- 03apama <br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong> TBD <br/></p>
-</li>
+<li><strong>Description:</strong> Define plugin execution order inside agent, e.g. using numbers in the plugin filename? Example: <br/>- 01debain<br/>- 02docker<br/>- 03apama <br/></li>
+<li><strong>Implications:</strong> TBD <br/></li>
 </ul>
 <p><strong>Comment:</strong> </p>
 <p>D 
@@ -2011,42 +1961,30 @@ In this case, the mapper should send only operation <code>FAILED</code> to C8Y c
 <p><strong>Reference:</strong> None</p>
 <p><strong>Option #1</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong> Yes, let Package Manager solve dependencies automatically. <br/></p>
-<p>See also ref https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/></p>
-<p>-&gt; Section: &quot;Update Software Operation&quot; <br/></p>
-<p>-&gt; Snippet: &quot;Just top-level packages are listed, because the software type specific Installer is responsible for dealing with dependency management.&quot; <br/></p>
-</li>
-<li>
-<p><strong>Implications:</strong> Convenient for Cloud-Operator, but could lead to unexpected / problematic behaviour as below: <br/></p>
-<p>-&gt; Could lead exceeded current sw-list size reported to cloud. Since Cloud operator is unknown of auto-dep installed package he could not fix that by added them to black-list / filter for current sw-list. <br/></p>
-<p>-&gt; Could lead to unexpected flash capacity load, in case of large dependencies. <br/></p>
-<p>-&gt; Could lead to invisible package on Cloud side (e.g. when auto-deps are blacklisted). These invisible package might be an issue from security point of view. They could be affected by vulnerabilities but Cloud Operator is not aware of these Packages (invisible). Even he would be aware of them he would not be able to update or remove them (invisible). <br/></p>
-<p>See also ref https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/></p>
-<p>-&gt; Section: &quot;Why is Software Management important&quot; <br/></p>
-<p>-&gt; Snippet: &quot;As all other software too, also the software on the device needs to be updated to fix e.g. security bugs. This is even required by e.g. EU Standards.&quot;</p>
-</li>
+<li><strong>Description:</strong> Yes, let Package Manager solve dependencies automatically. <br/>
+See also ref https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>
+-&gt; Section: &quot;Update Software Operation&quot; <br/>
+-&gt; Snippet: &quot;Just top-level packages are listed, because the software type specific Installer is responsible for dealing with dependency management.&quot; <br/></li>
+<li><strong>Implications:</strong> Convenient for Cloud-Operator, but could lead to unexpected / problematic behaviour as below: <br/>
+-&gt; Could lead exceeded current sw-list size reported to cloud. Since Cloud operator is unknown of auto-dep installed package he could not fix that by added them to black-list / filter for current sw-list. <br/>
+-&gt; Could lead to unexpected flash capacity load, in case of large dependencies. <br/>
+-&gt; Could lead to invisible package on Cloud side (e.g. when auto-deps are blacklisted). These invisible package might be an issue from security point of view. They could be affected by vulnerabilities but Cloud Operator is not aware of these Packages (invisible). Even he would be aware of them he would not be able to update or remove them (invisible). <br/>
+See also ref https://app.archbee.io/docs/9iGX1hbDjwAeMfyO9A3YE/coxr9CuTWSjk0eE1Nzgoj <br/>
+-&gt; Section: &quot;Why is Software Management important&quot; <br/>
+-&gt; Snippet: &quot;As all other software too, also the software on the device needs to be updated to fix e.g. security bugs. This is even required by e.g. EU Standards.&quot;</li>
 </ul>
 <p><strong>Option #2</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong>  No, prohibit that Package Manager solve dependencies automatically. <br/></p>
-<p>Dependency Management need to be done on Cloud-side, e.g. by adding all depending package into the update sw-list request, in the correct order. <br/></p>
-<p>See also Decision 3.</p>
-</li>
-<li>
-<p><strong>Implications:</strong> More effort and responsibility for Cloud Operator. <br/></p>
-</li>
+<li><strong>Description:</strong>  No, prohibit that Package Manager solve dependencies automatically. <br/>
+Dependency Management need to be done on Cloud-side, e.g. by adding all depending package into the update sw-list request, in the correct order. <br/>
+See also Decision 3.</li>
+<li><strong>Implications:</strong> More effort and responsibility for Cloud Operator. <br/></li>
 </ul>
 <p><strong>Option #3</strong></p>
 <ul>
-<li>
-<p><strong>Description:</strong>  Assume the plugin will install the require dependencies but let the user a way to list them if not. This implies that the all the packages are installed in the order specified by the the cloud operator. However, the operator will have to provide the correct order with the full set of dependencies only for the plugin that requires it. <br/></p>
-<p>See also Decision 3.</p>
-</li>
-<li>
-<p><strong>Implications:</strong> More effort and responsibility for Cloud Operator. <br/></p>
-</li>
+<li><strong>Description:</strong>  Assume the plugin will install the require dependencies but let the user a way to list them if not. This implies that the all the packages are installed in the order specified by the the cloud operator. However, the operator will have to provide the correct order with the full set of dependencies only for the plugin that requires it. <br/>
+See also Decision 3.</li>
+<li><strong>Implications:</strong> More effort and responsibility for Cloud Operator. <br/></li>
 </ul>
 <p><strong>Comment:</strong> Could be finally decided by Customer by adapting according Package Manager Plugin. But if provide no way to solve dependencies manually (see Decision 3) thats not an option for the Customer. </p>
 

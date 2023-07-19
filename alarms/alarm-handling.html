@@ -148,17 +148,16 @@
 <h1 id="data-semantic-of-alarms"><a class="header" href="#data-semantic-of-alarms">Data Semantic of Alarms</a></h1>
 <p>Thin-edge treats alarms as <strong>stateful signals</strong>. Instead to usual <strong>cyclic measured values</strong> (as e.g. measurements of physical units like temperature, humidity, pressure, ...) a <strong>stateful signal</strong> is transferred only on state-change. If such a transferred state-change got lost, the cloud assumes the wrong state until a next state-change occurs. Especially in case of alarms that means a once raised alarm would completely be unknown to the cloud.</p>
 <p>A lost alarm-raise could be even more problematic if the raised alarm requires some cloud-site interaction (or manual interaction). Since the lost alarm is not visible on cloud no interaction will be started. And since no state-change happens again, the alarm will never appear at cloud.</p>
-<p><strong>Consequence:</strong><br/></p>
-<p>All alarm state-changes need to be transferred reliable from <strong>Application to thin-edge</strong>, and from <strong>thin-edge to cloud</strong>.
+<p><strong>Consequence:</strong><br/>
+All alarm state-changes need to be transferred reliable from <strong>Application to thin-edge</strong>, and from <strong>thin-edge to cloud</strong>.
 I.E., alarm state-changes must not got lost, or device software must be able to detect loss and react accordingly (e.g. retry to transfer).</p>
 <h1 id="information-set-per-alarm"><a class="header" href="#information-set-per-alarm">Information Set per Alarm</a></h1>
 <p>The specified alarm attributes below are inspired by cumulocity data model for alarms, but shall be re-usable for other clouds where possible.</p>
 <table><thead><tr><th>Name</th><th>Description</th></tr></thead><tbody>
 <tr><td>type-string</td><td>Device-unique type string (kind of alarm ID or alarm name), used to reference the once occurred alarm again, e.g. in case of updates (e.g. &quot;temperature_sensor_loss&quot;)</td></tr>
-<tr><td>message-string</td><td>Human readable short information about alarm reason (e.g. &quot;Temperature sensor does not respond&quot;)</td></tr>
+<tr><td>text-string</td><td>Human readable short information about alarm reason (e.g. &quot;Temperature sensor does not respond&quot;)</td></tr>
 <tr><td>severity-string</td><td>Could be &quot;CRITICAL&quot;, &quot;MAJOR&quot;, &quot;MINOR&quot; or &quot;WARNING&quot;</td></tr>
 <tr><td>status-string</td><td>Could be &quot;ACTIVE&quot; or &quot;CLEARED&quot;<br/></td></tr>
-<tr><td></td><td></td></tr>
 <tr><td>time-string</td><td>Timestamp indicating when the alarm (or the alarm-update) had occurred (in <a href="http://www.w3.org/TR/NOTE-datetime#">ISO 8601 format</a>)</td></tr>
 </tbody></table>
 <h1 id="data-flow"><a class="header" href="#data-flow">Data flow</a></h1>
@@ -182,7 +181,7 @@ I.E., alarm state-changes must not got lost, or device software must be able to 
 <p><strong>thin-edge JSON (alarm) format:</strong></p>
 <pre><code>Topic:   tedge/alarms/&lt;severity-string&gt;/&lt;type-string&gt;
 Payload: {
-  &quot;message&quot;:  &lt;message-string&gt;,
+  &quot;text&quot;:  &lt;text-string&gt;,
   &quot;status&quot;:   &lt;status-string&gt;,  
   &quot;time&quot;:     &lt;time-string&gt;
 }
@@ -192,8 +191,8 @@ To address an alarm to a child-device the sub-topic <code>childs</code> followed
 <pre><code>Child-Device Topics:   tedge/alarms/childs/&lt;child-device id&gt;/&lt;severity-string&gt;/&lt;type-string&gt;
 </code></pre>
 <p>Benefit to have &quot;severity&quot; and &quot;type-string&quot; as topics:
-Device-Site reactions to alarm could be easier realized.<br/></p>
-<p>Examples:</p>
+Device-Site reactions to alarm could be easier realized.<br/>
+Examples:</p>
 <pre><code># Listen to all major alarms on all devices
 tedge mqtt sub &quot;tedge/alarms/+/major/+&quot;
 
@@ -203,24 +202,6 @@ tedge mqtt sub &quot;tedge/alarms/+/+/upper-limit-exceeded&quot;
 
 # And for sure all combinations.
 </code></pre>
-<p>Additionally an also supported &quot;raw&quot;-payload format will allow easy adoption for existing &quot;MQTT publishers&quot;:</p>
-<p><strong>Raw payload format:</strong></p>
-<pre><code>Topic:   tedge/alarms/&lt;severity-string&gt;/&lt;type-string&gt;
-Payload: &lt;message-string&gt;
-</code></pre>
-<p>NOTE: Child-device addressing works in the same way as for the JSON payload format above.</p>
-<p>In raw format for missing fields default values are used as below: </p>
-<ul>
-<li>
-<p>&quot;status&quot; := &quot;ACTIVE&quot;, if payload is not empty; &quot;CLEARED&quot;, if payload empty<br/></p>
-<p>NOTE: By nature of MQTT a message with empty payload will not be retained by the broker. However the mapper will store already transferred messages for de-duplication purpose anyway (see requirements above). Using that information mapper is in case of restart able to detect any not yet sent empty message.</p>
-</li>
-<li>
-<p>&quot;time&quot; := set to current system-time when picked-up by mapper</p>
-</li>
-</ul>
-<p>Benefit to support &quot;raw payload format&quot;:
-In industrial area (e.g. PLCs) there exist configurable MQTT publishers. These pick-up some data-item (e.g. some process-datapoint, alarm, ...) and publish it's raw value to some configured MQTT topic. With &quot;raw payload format&quot; above, such MQTT publishers can use thin-edge alarm interface without coding/developing some component in between.</p>
 
                     </main>
 
